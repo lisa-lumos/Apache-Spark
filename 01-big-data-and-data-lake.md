@@ -93,32 +93,33 @@ To address these problems, the processed data processed by Spark is stored in a 
 
 With the development of Cloud technologies, the Data Lake also matured, as a platform, with 4 key capabilities:
 1. Data collection and ingestion
-2. Data storage and management. Could be an on-prem HDFS, or Amazon S3, Azure Blob, Azure Data Lake Storage, Google Cloud Storage. 
+2. Data storage and management. Could be an on-prem HDFS, or Amazon S3, Azure Blob, Azure Data Lake Storage, Google Cloud Storage, Cassandra file system. 
 3. Data processing and transformation. Using Apache Spark. Including initial data quality check, data transformation, extracting business insights, applying ML model, etc. 
 4. Data access and retrieval. Contains DW for reporting, etc. 
 
 The notion of the data lake recommends that you bring data into the lake in a raw format. It means you preserve an unmodified, immutable copy of the data. The ingestion tool just bring data from source systems to the data lake. 
 
 ## Apache Spark and Databricks Cloud
+Databricks is the main driving force behind the Spark. 
 
+The Spark core layer has 2 parts:
+1. A distributed computing engine
+2. A set of core APIs. Used for writing data processing logic during the initial days of Apache Spark. Can be tricky to learn. Lack some performance optimization features. Now recommended to avoid them. 
 
+Spark only gives you the data processing framework, so you will need a "cluster manager". They are also called "Resource manger", or "container orchestrator". The Hadoop YARN resource manager is the most commonly used cluster manager for Spark. You can also use Mesos, and Spark Standalone Cluster Manager. The newer versions of Spark are also compatible with Kubernetes as a Cluster Orchestrator. 
 
+The Spark compute engine is responsible for:
+- breaking the data processing work into smaller tasks
+- scheduling those tasks on the cluster for parallel execution
+- providing data to these tasks
+- managing/monitoring these tasks
+- providing fault-tolerance when a job fails
+- ...
 
+The Spark SQL, Spark DataFrame APIs, Spark Streaming libraries, MLlib for Machine Learning, GraphX for Graph Computation are a set of libraries/packages/APIs/DSL developed on top of the core APIs. 
 
+Spark abstracts away the code to operate on a cluster. Compared with old Hadoop and MapReduce code, Spark code is shorter/simpler/easier-to-understand. 
 
+Apache spark is an open-source project. The original creators of Apache Spark donated it to Apache Foundation. However, the same team formed a company, and a commercial product around Apache Spark. The company and the product are both named Databricks. 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Databricks brings Apache Spark to the Cloud. It allows you to launch a cluster for running Spark applications automatically. So you do not need to configure and launch a cluster manually. It allows you to start/config/install all the dependency and runtime libraries on all the nodes, to run your Spark application. Databricks Cloud also offers you Notebooks and Workspace for Spark development. Databricks Spark runtime is 5x faster than the standard Apache Spark runtime. Databricks offer an integrated Hive meta-store to store metadata, allowing you to create databases/tables/views, using Spark SQL. It offers Delta Lake integration, that offers ACID transactions. It offers ML Flow to mange the machine learning life cycle. 
