@@ -87,15 +87,17 @@ Today, Spark exists on 2 kinds of platforms:
 2. Cloud Lake house. The Databricks Spark platform is the driving force. 
 
 ## Data lake
+Store data in HDFS, process the data using Spark, store processed data in the Data Lake, used for BI and reporting. However, it is missing these key features: transaction/consistency, and reporting performance. 
 
+To address these problems, the processed data processed by Spark is stored in a Data Warehouse (relational). The BI is connected to the DW. Note that Machine Learning and AI still work on the Data Lake.  This is the current data architecture for many organizations (data lake married data warehouse). 
 
+With the development of Cloud technologies, the Data Lake also matured, as a platform, with 4 key capabilities:
+1. Data collection and ingestion
+2. Data storage and management. Could be an on-prem HDFS, or Amazon S3, Azure Blob, Azure Data Lake Storage, Google Cloud Storage. 
+3. Data processing and transformation. Using Apache Spark. Including initial data quality check, data transformation, extracting business insights, applying ML model, etc. 
+4. Data access and retrieval. Contains DW for reporting, etc. 
 
-
-
-
-
-
-
+The notion of the data lake recommends that you bring data into the lake in a raw format. It means you preserve an unmodified, immutable copy of the data. The ingestion tool just bring data from source systems to the data lake. 
 
 ## Apache Spark and Databricks Cloud
 
