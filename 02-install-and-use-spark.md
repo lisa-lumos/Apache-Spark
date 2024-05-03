@@ -61,8 +61,41 @@ In Admin Setting in the upper-right corner, you can add user, create global init
 In the Notebook view, in the upper-left corner, you can create new notebook, clone notebook, view setting, etc. 
 
 ## Create your First Spark Application in Databricks Cloud
+In the left pane, Create -> Notebook -> Name: 01-getting-started -> Create
 
+Assume you have data file "/databricks-datasets/ggplot2/diamonds.csv", 
 
+Cell 1: 
+```python
+diamonds_df = spark.read.format("csv") \
+              .option("header", "true") \
+              .option("inferSchema", "true") \
+              .load("/databricks-datasets/ggplot2/diamonds.csv")
+
+diamonds_df.show(10)
+```
+
+Click the dropdown menu below the Notebook name, and create a cluster. Then click on the same dropdown menu, and attach this cluster to the notebook. 
+
+Run Cell 1. It will display the data frame. 
+
+Cell 2 groups the df by color, and takes avg price for each color: 
+```python
+from pyspark.sql.functions import avg
+results_df = diamonds_df.select("color", "price") \
+             .groupBy("color") \
+             .agg(avg("price")) \
+             .sort("color") \
+
+results_df.show()
+```
+
+Cell 3 formats the results into tabular format:
+```py
+display(results_df)
+```
+
+Run cell 3, see the table, then click on the "bar chart" icon below the table, and Databricks will display it as a bar chart. 
 
 ## Setup your Local Development IDE
 
