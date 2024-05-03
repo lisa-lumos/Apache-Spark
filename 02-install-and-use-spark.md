@@ -46,15 +46,19 @@ To read a file from a location, you also need storage. You get some free storage
 
 By default, there is a "FileStore" directory. Click on this folder. Upload -> DBFS Target Directory: /FileStore/sample_data; drag the csv file to Files -> Done. 
 
+To run the code in the cell, click on the "run cell" button at the upper-right corner of the cell. 
 
+The "Search" menu in the left pane allow you to search across folders and Notebooks. 
 
+The "Data" menu in the left pane shows the data. You can also create tables in there. 
 
+The "Compute" menu in the left pane shows all your clusters. After 1-2 hours of idle, the cluster will be terminated. But you can create a new one when you come back. 
 
+The "Workflows" menu in the left pane allows you to create a workflow of jobs (aka, pipelines). But the community edition doesn't have it, without upgrading to paid version. 
 
+In Admin Setting in the upper-right corner, you can add user, create global init scripts, etc.
 
-
-
-
+In the Notebook view, in the upper-left corner, you can create new notebook, clone notebook, view setting, etc. 
 
 ## Create your First Spark Application in Databricks Cloud
 
