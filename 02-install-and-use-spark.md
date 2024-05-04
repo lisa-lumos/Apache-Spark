@@ -98,33 +98,38 @@ display(results_df)
 Run cell 3, see the table, then click on the "bar chart" icon below the table, and Databricks will display it as a bar chart. 
 
 ## Setup your Local Development IDE
-
-
+skipped
 
 ## Mac Users - Setup your Local Development IDE
-
-
+skipped
 
 ## Create your First Spark Application using IDE
+Open PyCharm, create a new project. Specify the folder of the project, use Virtualenv as new environment, select the latest interpreter, uncheck everything else -> Create. 
 
+Right click the project folder in the left pane -> New -> Python File, and name it "HelloSpark.py". 
 
+To check if PySpark is installed in your project venv, in the bottom bar, click "Python Packages", it will show the installed packages. If you cannot find it, search "pyspark" it in the search bar, select the correct one in the results, in the right pane, click the "three vertical dots", and "Install". 
 
+```py
+from pyspark.sql import *
 
+if __name__ = "__main__":
+    print("Hello Spark")
 
+    spark = SparkSession.builder \
+        .appName("Hello Spark") \
+        .master("local[2]") \
+        .getOrCreate()
 
+    data_list = [
+        ("apple", 5),
+        ("orange", 10),
+        ("grapes", 12)
+    ]
 
+    df = spark.createDataFrame(data_list).toDF("name", "count")
+    df.show()
 
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+Run the code. 
