@@ -50,7 +50,44 @@ from global_temp.fire_service_calls_view
 ```
 
 ## Creating Spark Tables
+Create a new notebook, set default language as SQL. 
+```sql
+-- cell 1. 
+-- Run it, and can see it in the data pane in the left
+create database if not exists demo_db
 
+-- cell 2
+-- every db table internally stores data in files
+-- and this table's data file is stored in parquet format
+create table if not exists demo_db.fire_service_calls_tbl(
+  CallNumber integer,
+  UnitID string,
+  ... -- skipped more cols
+) using parquet
+
+-- cell 3
+-- can insert using sql
+-- but spark tables are meant to hold large amount of data
+-- so usually this is not how data is loaded into spark tables
+insert into demo_db.fire_service_calls_tbl values (
+  1234, null, null, ...
+)
+
+-- cell 4
+select * from demo_db.fire_service_calls_tbl
+
+-- cell 5
+-- spark sql doesn't offer delete statements
+truncate table demo_db.fire_service_calls_tbl
+
+-- cell 6
+-- insert into spark table using a view that was previously created
+insert into demo_db.fire_service_calls_tbl
+select * from global_temp.fire_service_calls_view
+
+```
+
+Documentation location: spark docs -> Latest Release -> Programming Guides -> SQL, DataFrames, and Datasets -> SQL Reference -> SQL Syntax -> Data Definition Statements
 
 ## Common problem with Databricks Community
 
