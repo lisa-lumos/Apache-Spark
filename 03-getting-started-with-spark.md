@@ -98,10 +98,21 @@ The community edition will not clean up the directories and files. So you do not
 Manually cleaning up the data files with a new cell `%fs rm -r /user/hive/warehouse/demo_db.db` (do not delete the warehouse dir, it is the default location for all Spark databases), then in a new cell, do `drop table if exists demo_db.fire_service_calls_tbl; drop database if exits demo_db;`, and running the entire notebook with a new cluster will re-create the metadata layer. 
 
 ## Working with Spark SQL
-
+skipped.
 
 ## Dataframe Transformations and Actions
+Documentation -> Latest Release -> API Docs -> Python -> API Reference -> Spark SQL -> pyspark.sql.DataFrame
 
+Dataframe method types:
+- Actions. Trigger a Spark job, and return to the Spark driver (vs executor). 
+- Transformations. Produce a newly transformed dataframe. 
+- Functions/Methods. Not actions nor transformations. 
+
+Actions: collect, count, describe, first, foreach/foreachPartition, head/tail, show, summary, take, toLocalIterator. 
+
+Transformations: agg, alias, coalesce, colRegex, filter, groupby, dropna, join, limit, orderBy, select, sort, union, where, ...
+
+Functions/Methods: cache, checkpoint, createTempView, explain, toDF, toJSON, writeTo, ...
 
 ## Applying Transformations
 
