@@ -53,6 +53,7 @@ from global_temp.fire_service_calls_view
 Create a new notebook, set default language as SQL. 
 ```sql
 -- cell 1. 
+-- can skip semicolon if the cell only contain one command
 -- Run it, and can see it in the data pane in the left
 create database if not exists demo_db
 
@@ -89,8 +90,12 @@ select * from global_temp.fire_service_calls_view
 
 Documentation location: spark docs -> Latest Release -> Programming Guides -> SQL, DataFrames, and Datasets -> SQL Reference -> SQL Syntax -> Data Definition Statements
 
-## Common problem with Databricks Community
+## Common problem with Databricks Community Edition
+When a cluster terminates, both the cluster VM and the Spark Metadata store is gone. So you will lose you databases and tables. This problem doesn't exist for the full licensed version of the Databricks Cloud. 
 
+The community edition will not clean up the directories and files. So you do not lose your storage layer. This external storage is not part of your cluster. 
+
+Manually cleaning up the data files with a new cell `%fs rm -r /user/hive/warehouse/demo_db.db` (do not delete the warehouse dir, it is the default location for all Spark databases), then in a new cell, do `drop table if exists demo_db.fire_service_calls_tbl; drop database if exits demo_db;`, and running the entire notebook with a new cluster will re-create the metadata layer. 
 
 ## Working with Spark SQL
 
