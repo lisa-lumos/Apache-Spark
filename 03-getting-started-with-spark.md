@@ -115,7 +115,40 @@ Transformations: agg, alias, coalesce, colRegex, filter, groupby, dropna, join, 
 Functions/Methods: cache, checkpoint, createTempView, explain, toDF, toJSON, writeTo, ...
 
 ## Applying Transformations
+```python
+# cell 1
+raw_fire_df = spark.read \ 
+    .format("csv") \
+    .option("header", "true") \
+    .option("inferSchema", "true") \
+    .load("/databricks-datasets/learning-spark-v2/sf-fire/sf-file-calls.csv")
 
+# cell 2
+display(raw_file_df)
+
+# cell 3
+# spark dataframe column names are case-insensitive. 
+# spark dataframe is immutable - you cannot change the existing dataframe, 
+# instead, you transform the existing df, and create a new df. 
+renamed_fire_df = raw_fire_df \
+    .withColumnRenamed("Call Number", "CallNumber") # old col name, new col name
+    .withColumnRenamed("Unit ID", "UnitID") # you can chain them
+
+# cell 4
+# see the schema of the df
+renamed_fire_df.printSchema()
+
+# cell 5
+from pyspark.sql.functions import *
+
+# cell 6
+# withColumn(name_of_the_new_col, calculation_for_the_new_col)
+fire_df = renamed_fire_df \
+    .withColumn("CallDate", to_date("CallDate", "MM/dd/yyyy")) \ 
+    .withColumn("AvailableDtTm", to_timestamp("AvailableDtTm", "MM/dd/yyyy hh:mm:ss a")) \
+    .withColumn("Delay", round("Delay", 2))
+
+```
 
 ## Querying Spark Dataframe
 
