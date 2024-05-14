@@ -151,7 +151,33 @@ fire_df = renamed_fire_df \
 ```
 
 ## Querying Spark Dataframe
+```py
+# cell
+# will run many analysis on this df, cache it in memory will speed it up
+fire_df.cache()
 
+# cell
+# create a temp view of the df, and query the view using sql
+# spark.sql() executes the sql, and returns the result into a new df
+fire_df.createOrReplaceTempView("fire_service_calls_view")
+sql_df_1 = spark.sql("""
+select 
+    count(distinct CallType) as distinct_call_type_count
+from fire_service_calls_view
+where CallType is not null
+"""
+)
+display(sql_df_1)
+
+# cell
+# where() does the filtering, the condition string is same with sql
+df_1 = fire_df.where("CallType is not null") \
+    .select("CallType") \
+    .distinct()
+# best practice: keep an action on a separate line. 
+print(df_1.count()) # this is an action, because it doesn't return df, it triggers spark job execution, and returns to the spark driver
+
+```
 
 ## More Dataframe Transformations
 
