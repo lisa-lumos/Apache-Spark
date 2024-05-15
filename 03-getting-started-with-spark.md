@@ -177,23 +177,35 @@ df_1 = fire_df.where("CallType is not null") \
 # best practice: keep an action on a separate line. 
 print(df_1.count()) # this is an action, because it doesn't return df, it triggers spark job execution, and returns to the spark driver
 
+# cell
+# if you want to use an expression in select(),
+# you must evaluate the expression using expr()
+df_2 = fire_df.where("CallType is not null") \
+    .select(expr("CallType as distinct_call_type")) \
+    .distinct()
+df_2.show()
+
+# cell
+# select() takes a comma separated list of columns
+# you can chain one and only one Action, and
+# it must be the last method in the chain
+df_3 = fire_df.where("Delay > 5") \
+    .select("CallNumber", "Delay") \
+    .show()
+
+# cell
+# you can use select first, then where, or vise versa,
+# because the end result is the same,
+# and the performance is also the same. This rule doesn't apply to other methods. 
+# groupBy() takes a comma-separated list of cols
+# the count() here is a transformation, instead of an action,
+# because it doesn't apply to a df, instead,
+# it takes the GroupedData object, which is returned by groupBy()
+df_4 = fire_df.select("CallType") \
+    .where("CallType is not null") \
+    .groupBy("CallType") \
+    .count() \
+    .orderBy("count", ascending=False) \
+    .show()
+
 ```
-
-## More Dataframe Transformations
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
