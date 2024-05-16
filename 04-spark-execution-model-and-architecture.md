@@ -18,7 +18,13 @@ In Spark terminology, the master is a driver, and the workers are executors.
 The Spark engin ask for a container from the underlying cluster manager, to start the driver process. Once started, the driver again will ask for some more containers, to start the executor process. This happens for each application. 
 
 ## Spark Execution Modes and Cluster Managers
+Q: How does Spark run on a local machine?
+A: Local cluster manager, spark runs locally as a multi-threaded application. If you only use one thread, the the driver has to do all the work by itself. If you use 3 threads, you will get 1 dedicated driver thread, and 2 executor threads. Basically, it is a simulation of distributed client-server architecture, using multiple threads. 
 
+Q: How does Spark run with an interactive tool? 
+A: The client mode. The Spark driver on the local machine is connected to the cluster manager (yarn), and starts all the executors on the cluster. If you quit your client, or log off from your client machine, then your driver dies, and hence the executors will also die, in the absence of the driver. So client mode is suitable for interactive work, but not for long-running jobs. 
+
+The cluster mode, in contrast, is designed to submit your application to the cluster, and let it run. In this mode, everything, including driver and executors, run on the cluster. Once you submit your job, you can log off from the client machine, and your driver is not impacted. 
 
 ## Summarizing Spark Execution Models - When to use What?
 
