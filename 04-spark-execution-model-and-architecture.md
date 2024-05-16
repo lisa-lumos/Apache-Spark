@@ -11,7 +11,11 @@ Use cases:
 For these use cases, you must package your app, and submit it to the Spark cluster for execution. 
 
 ## Spark Distributed Processing Model - How your program runs?
+When an application is submitted to Spark, it will create a master process for the app. This master process will then create a bunch of workers to distribute and complete the job. 
 
+In Spark terminology, the master is a driver, and the workers are executors.
+
+The Spark engin ask for a container from the underlying cluster manager, to start the driver process. Once started, the driver again will ask for some more containers, to start the executor process. This happens for each application. 
 
 ## Spark Execution Modes and Cluster Managers
 
