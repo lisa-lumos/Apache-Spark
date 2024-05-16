@@ -27,7 +27,11 @@ A: The client mode. The Spark driver on the local machine is connected to the cl
 The cluster mode, in contrast, is designed to submit your application to the cluster, and let it run. In this mode, everything, including driver and executors, run on the cluster. Once you submit your job, you can log off from the client machine, and your driver is not impacted. 
 
 ## Summarizing Spark Execution Models - When to use What?
+Cluster managers: local[n] (for using on your local machine), or YARN (for using on a real cluster). 
 
+Execution modes: client (for local machine, or on YARN cluster with notebook/sparkShell), or cluster
+
+Execution Tools: IDE, Notebook (for local machine), Spark submit (real cluster)
 
 ## Working with PySpark Shell - Demo
 
