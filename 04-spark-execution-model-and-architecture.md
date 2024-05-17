@@ -34,12 +34,29 @@ Execution modes: client (for local machine, or on YARN cluster with notebook/spa
 Execution Tools: IDE, Notebook (for local machine), Spark submit (real cluster)
 
 ## Working with PySpark Shell - Demo
+```console
+pyspark --help
 
+# use 3 threads, give driver 2gb of ram. 
+pyspark --master local[3] --driver-memory 2G
+
+>>> df = spark.read.json("C:/demo/notebook/data/people.json")
+>>> df.show()
+
+# this url is the Spark Context web UI. 
+# localhost:4040/jobs/ 
+
+# The above UI is only available when the spark application is running. 
+
+```
 
 ## Installing Multi-Node Spark Cluster - Demo
-
+In you GCP account, go to your Console Home page. Click the dropdown menu in the upper left corner -> Dataproc -> Clusters. This ia an on-demand YARN Cluster, which comes with the Spark setup. Name: yarn-cluster; Master node Machine type: n1-standard-2 (2 vCPU, 7.5GB memory); Primary disk size: 32; Worker nodes Machine type: n1-standard-1 (1 vCPU, 3.75GB memory); Primary disk size: 32; Nodes: 3; Check the Enable access to the web interfaces -> Advance options -> Cloud Storage staging bucket: (create a bucket, in the same region as the cluster); Image: 1.5 (get the latest version of Spark); Optional components: Anaconda, Zeppelin Notebook; Scheduled deletion: check Delete after a cluster idle time period without submitted jobs: 1 hrs -> Create. 
 
 ## Working with Notebooks in Cluster - Demo
 
 
 ## Working with Spark Submit - Demo
+
+
+
