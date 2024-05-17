@@ -77,6 +77,10 @@ spark.version
 ```
 
 ## Working with Spark Submit - Demo
+Mostly used to executing packaged Spark application on your prod cluster. 
+```console
+spark-submit --help
 
-
-
+# the 100 is the input into the code
+spark-submit --master yarn --deploy-mode cluster test.py 100
+```
