@@ -54,7 +54,27 @@ pyspark --master local[3] --driver-memory 2G
 In you GCP account, go to your Console Home page. Click the dropdown menu in the upper left corner -> Dataproc -> Clusters. This ia an on-demand YARN Cluster, which comes with the Spark setup. Name: yarn-cluster; Master node Machine type: n1-standard-2 (2 vCPU, 7.5GB memory); Primary disk size: 32; Worker nodes Machine type: n1-standard-1 (1 vCPU, 3.75GB memory); Primary disk size: 32; Nodes: 3; Check the Enable access to the web interfaces -> Advance options -> Cloud Storage staging bucket: (create a bucket, in the same region as the cluster); Image: 1.5 (get the latest version of Spark); Optional components: Anaconda, Zeppelin Notebook; Scheduled deletion: check Delete after a cluster idle time period without submitted jobs: 1 hrs -> Create. 
 
 ## Working with Notebooks in Cluster - Demo
+Mostly used by data scientists/analysts for interactive exploration directly in the production cluster. 
 
+Work with shell. ssh to the GCP master node, and run:
+```console
+pyspark --master yarn --driver-memory 1G --executor-memory 500M --num-executors 2 --executor-cores 1
+```
+
+In the GCP cluster page, go the WEB INTERFACES pane, and can access the Spark Context UI from here. YARN ResourceManager (show apps that are currently running) and Spark History Server (shows list of applications that you executed in the past. Clicking the application id will take you to the Spark Context UI, where you can see when drivers and executors are added. ). 
+
+Work with Zeppelin Notebook UI. In the GCP cluster page, go the WEB INTERFACES pane -> Zeppelin
+```py
+# cell
+# default is scala
+spark.version
+
+# cell
+# need to add an interpreter directive for the cell,
+# to ensure the cell is a pyspark cell
+%pyspark
+1 + 1 # print something
+```
 
 ## Working with Spark Submit - Demo
 
