@@ -22,7 +22,7 @@ Run the code, and see the printed message.
 
 ## Configuring Spark Project Application Logs
 Add a Log4J property file to the project folder. "log4j.properties":
-```py
+```conf
 # Set everything to be logged to the console
 # WARN is the log level, and console is the appender list
 # so at the top most level, only see warnings and errors, at the console. 
@@ -148,7 +148,88 @@ class Log4J:
 Run "HelloSpark.py", and see the prints. See the newly created "app-logs" folder under the project folder. See the "hello-spark.log" file in there. Notice the logs in this file doesn't have noisy entries from other spark and hadoop packages.  
 
 ## Configuring Spark Session
+For developers, the common ways to configure the spark session are:
+1. spark-submit command line options. Such as `spark-submit --master local[3] --conf "spark.app.name=Hello Spark" --conf spark.eventLog.enabled=false HelloSpark.py`. Note double quotes are there because of the space. 
+2. SparkConf object. Such as `.appName("...").master("...")`
 
+"HelloSpark.py": 
+```py
+from pyspark.sql import *
+
+if __name__ == "__main__":
+    # a list of all spark configs: 
+    # https://spark.apache.org/docs/latest/configuration.html#application-properties
+    conf = SparkConf()
+    conf.set("spark.app.name", "Hello Spark")
+    conf.set("spark.master", "local[3]")
+    
+    spark = SparkSession.builder \ 
+        .config(conf=conf) \
+        .getOrCreate()
+
+    logger = Log4J(spark)
+
+    logger.info("Starting HelloSpark")
+
+    # you processing code goes here
+
+    logger.info("Finished HelloSpark")
+
+    spark.stop()
+```
+
+Order of precedence for config locations: env variable < "spark-defaults.conf" file < command line options < SparkConf. So configs in the application code has the highest precedence. 
+
+Which config method to use:
+1. For deployment related configs, such as spark.driver.memory, spark.executor.instances, which depend on the cluster manager and your deploy mode. Set them through the spark-submit command line. 
+2. For configs that control the Spark Application runtime behavior, such as spark.task.maxFailures. Set them through SparkConf in the code. 
+
+In the current version of the code, the master is hard-coded. This can be a problem when you deploy to prod. 3 ways to handle it. 
+
+Solution: Could create a config file and load them at runtime. Right-click the project folder -> New -> File -> name it "spark.conf":
+```conf
+[SPARK_APP_CONFIGS]
+spark.app.name = Hello Spark
+spar.master = local[3]
+```
+
+Right click the "lib" folder -> New -> Python file -> name it "utils":
+```py
+import configparser
+from pyspark import SparkConf
+
+def get_spark_app_config():
+    spark_conf = SparkConf()
+    config = configparser.ConfigParser()
+    config.read("spark.conf")
+
+    for (key, val) in config.items("SPARK_APP_CONFIGS"):
+        spark_conf.set(key, val)
+    return spark_conf
+```
+
+"HelloSpark.py": 
+```py
+from pyspark.sql import *
+
+if __name__ == "__main__":
+    conf = get_spark_app_config()
+    spark = SparkSession.builder \ 
+        .config(conf=conf) \
+        .getOrCreate()
+
+    logger = Log4J(spark)
+
+    logger.info("Starting HelloSpark")
+
+    # print out the config
+    conf_out = spark.sparkContext.getConf()
+    logger.info(conf_out.toDebugString())
+
+    logger.info("Finished HelloSpark")
+
+    spark.stop()
+```
 
 ## Data Frame Introduction
 
