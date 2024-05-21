@@ -76,7 +76,76 @@ In your local machine, use file "SPARK_HOME/conf/spark-defaults.conf" to set JVM
 We cannot used python logger, because collecting python log files across multiple nodes ia not integrated with the spark. 
 
 ## Creating Spark Session
+The SparkSession object is your Spark Driver, which starts the executors, who then will do most of the work. 
 
+When you start the spark shell, or the notebook, they create a Spark Session for you, and make it available as a variable, named "spark". 
+
+However, when you are writing a Spark program, then you must create a SparkSession, because it is not already provided. 
+
+The SparkSession is a Singleton object, so each Spark application can have one and only one active spark session. It is because SparkSession if your driver, and you cannot have more than 1 driver in a Spark application. 
+
+"HelloSpark.py": 
+```py
+# you need this line in every spark code
+from pyspark.sql import *
+
+if __name__ == "__main__":
+    print("Starting Hello Spark. ")
+
+    # create a spark session
+    # the builder method returns a Builder object
+    # Some configs, such as appName() and master() are most commonly used,
+    # so we have direct methods to specify them. 
+    # But we also have some overloaded config() methods, 
+    # for all other configurations. 
+    # master() is the cluster manager, such as local JVM with 3 threads
+    spark = SparkSession.builder \ 
+        .appName("Hello Spark") \
+        .master("local[3]")
+        .getOrCreate()
+
+    logger = Log4J(spark)
+
+    logger.info("Starting HelloSpark")
+
+    # you processing code goes here
+
+    logger.info("Finished HelloSpark")
+
+    spark.stop() # after done data processing, stop the driver
+```
+
+Right click on project name -> New -> Python Package -> name it as "lib" (this will create a "lib" folder under project folder, and put a "__init__.py" file in it) -> Right click on the "lib" folder -> New -> Python File -> name it as "logger" (this will create a "logger.py" file).
+
+"logger.py":
+```py
+class Log4J:
+    def __init__(self, spark):
+        log4j = spark._jvm.org.apache.log4j
+        # the logger name is defined in the "log4j.properties" file
+        # use your organization name as the root class,
+        # and suffix it with the application name
+        # as long as root_class matches, log4j will work
+        root_class = "guru.learningjournal.spark.examples"
+        conf = spark.sparkContext.getConf()
+        app_name = conf.get("spark.app.name")
+        self.logger = log4j.LogManager.getLogger(root_class + "." + app_name)
+
+    def warn(self, message):
+        self.logger.warn(message)
+
+    def info(self, message):
+        self.logger.info(message)
+
+    def error(self, message):
+        self.logger.error(message)
+
+    def debug(self, message):
+        self.logger.debug(message)
+
+```
+
+Run "HelloSpark.py", and see the prints. See the newly created "app-logs" folder under the project folder. See the "hello-spark.log" file in there. Notice the logs in this file doesn't have noisy entries from other spark and hadoop packages.  
 
 ## Configuring Spark Session
 
