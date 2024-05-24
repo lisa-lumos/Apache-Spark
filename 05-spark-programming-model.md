@@ -155,6 +155,7 @@ For developers, the common ways to configure the spark session are:
 "HelloSpark.py": 
 ```py
 from pyspark.sql import *
+from lib.logger import Log4J
 
 if __name__ == "__main__":
     # a list of all spark configs: 
@@ -211,6 +212,8 @@ def get_spark_app_config():
 "HelloSpark.py": 
 ```py
 from pyspark.sql import *
+from lib.logger import Log4J
+from lib.utils import get_spark_app_config
 
 if __name__ == "__main__":
     conf = get_spark_app_config()
@@ -232,7 +235,70 @@ if __name__ == "__main__":
 ```
 
 ## Data Frame Introduction
+Read -> process -> write
 
+Assume in the project directly, there is a "data" folder, with a file "sample.csv" inside.
+
+First, pass the file name and location as a command line argument to the application. Because we do not want to hard-code the file dir. In PyCharm, Run -> Edit Configurations... -> Under the "Configuration" pane, Parameters: data\sample.csv -> OK. 
+
+Spark DataFrame is a 2D table-like data structure, that is inspired by Pandas dataframe. 
+
+"lib/utils.py", add a function to read the data, so later can used for unit testing also:
+```py
+import configparser
+from pyspark import SparkConf
+
+def get_spark_app_config():
+    spark_conf = SparkConf()
+    config = configparser.ConfigParser()
+    config.read("spark.conf")
+
+    for (key, val) in config.items("SPARK_APP_CONFIGS"):
+        spark_conf.set(key, val)
+    return spark_conf
+
+def load_survey_df(spark, data_file):
+    # to see a list of csv read options:
+    # go to Spark Python API docs
+    # search for "DataFrameReader",
+    # find pyspark.sql.DataFrameReader -> csv method
+    # header is true, so df get inferred col names
+    # inferSchema sometimes work, but not always
+    return spark.read \
+        .option("header", "true") \
+        .option("inferSchema", "true") \
+        .csv(sys.argv[1]) # pass the file path
+
+```
+
+"HelloSpark.py": 
+```py
+from pyspark.sql import *
+from lib.logger import Log4J
+from lib.utils import get_spark_app_config
+
+if __name__ == "__main__":
+    conf = get_spark_app_config()
+    spark = SparkSession.builder \ 
+        .config(conf=conf) \
+        .getOrCreate()
+
+    logger = Log4J(spark)
+
+    # check the command line argument
+    if len(sys.argv) != 2:
+        logger.error("Usage: HelloSpark <filename>")
+        sys.exit(-1)
+
+    logger.info("Starting HelloSpark")
+
+    survey_df = load_survey_df(spark, sys.argv[1])
+    survey_df.show() # run it to see the results
+
+    logger.info("Finished HelloSpark")
+
+    spark.stop()
+```
 
 ## Data Frame Partitions and Executors
 
