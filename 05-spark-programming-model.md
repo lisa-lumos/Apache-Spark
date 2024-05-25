@@ -384,7 +384,9 @@ Run the code, wait for it to reach the input step. Then, go to "localhost:4040" 
 A list of all stages can be found under the "Stages" tab. Each stage is further broken down into tasks. These task are the unit of work that is finally assigned to executors. 
 
 ## Understanding your Execution Plan
+Every Spark action (such as reading from a csv) is translated into a Spark job. Each job must have at least 1 stage, and each stage must have at least 1 task. 
 
+Each stage comes with is own DAG of internal operations. You can get the stage's DAG by clicking the Description link under the "Stages" pane. Reading a csv contains FileScan and MapPartitions in the DAG. 
 
 ## Unit Testing Spark Application
 
