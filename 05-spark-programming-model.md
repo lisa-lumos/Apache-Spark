@@ -241,7 +241,7 @@ Assume in the project directly, there is a "data" folder, with a file "sample.cs
 
 First, pass the file name and location as a command line argument to the application. Because we do not want to hard-code the file dir. In PyCharm, Run -> Edit Configurations... -> Under the "Configuration" pane, Parameters: data\sample.csv -> OK. 
 
-Spark DataFrame is a 2D table-like data structure, that is inspired by Pandas dataframe. 
+Spark DataFrame is a 2D table-like, distributed data structure, that is inspired by Pandas dataframe. 
 
 "lib/utils.py", add a function to read the data, so later can used for unit testing also:
 ```py
@@ -301,7 +301,7 @@ if __name__ == "__main__":
 ```
 
 ## Data Frame Partitions and Executors
-
+The data in the HDFS is stored in a distributed storage. The data is stored in many partitions, and each node store one or more of these partitions. When spark read the data, it creates a logical in-memory data structure (a dataframe). The driver will then assign to each executor their share of partitions to process the data. While assigning partitions to these executors, Spark will try to allocate the partitions which are closest to the executors in the network, for utilize locality. 
 
 ## Spark Transformations and Actions
 
