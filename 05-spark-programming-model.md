@@ -389,11 +389,43 @@ Every Spark action (such as reading from a csv) is translated into a Spark job. 
 Each stage comes with is own DAG of internal operations. You can get the stage's DAG by clicking the Description link under the "Stages" pane. Reading a csv contains FileScan and MapPartitions in the DAG. 
 
 ## Unit Testing Spark Application
+For reading the csv file, the unit test can be: read the file, validate the number of records. 
 
+For the transformation part, the unit test can be: read the data file, apply the transformations, and validate the results. 
 
+In the project folder -> New -> Python File -> name it "test_utils.py":
+```py
+from unittest import TestCase
+from pyspark.sql import SparkSession
+from lib.utils import load_survey_df, count_by_country
 
+class UtilsTestCase(TestCase):
+    spark = None
 
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.spark = SparkSession.builder \
+            .master("local[3]") \
+            .appName("HelloSparkTest") \
+            .getOrCreate()
 
+    def test_datafile_loading(self):
+        sample_df = load_survey_df(self.spark, "data/sample.csv")
+        result_count = sample_df.count()
+        self.assertEqual(result_count, 9, "Record count should be 9")
 
+    def test_country_count(self):
+        sample_df = load_survey_df(self.spark, "data/sample.csv")
+        count_list = count_by_country(sample_df).collect()
+        count_dict = dict()
+        for row in count_list:
+            count_dict[row["Country"]] = row["count"]
+        self.assertEqual(count_dict["United States"], 4, "Count for United States should be 4")
+        self.assertEqual(count_dict["Canada"], 2, "Count for Canada should be 2")
+        self.assertEqual(count_dict["United Kingdom"], 1, "Count for Unites Kingdom should be 1")
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.spark.stop()
+```
 
