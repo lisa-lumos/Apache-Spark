@@ -345,11 +345,43 @@ if __name__ == "__main__":
     spark.stop()
 ```
 
-
-
-
 ## Spark Jobs Stages and Task
+"HelloSpark.py": 
+```py
+from pyspark.sql import *
+from lib.logger import Log4J
+from lib.utils import get_spark_app_config
 
+if __name__ == "__main__":
+    conf = get_spark_app_config()
+    spark = SparkSession.builder \ 
+        .config(conf=conf) \
+        .getOrCreate()
+
+    logger = Log4J(spark)
+
+    if len(sys.argv) != 2:
+        logger.error("Usage: HelloSpark <filename>")
+        sys.exit(-1)
+
+    logger.info("Starting HelloSpark")
+
+    survey_df = load_survey_df(spark, sys.argv[1])
+    partitioned_survey_df = survey_df.repartition(2) # repartition to 2
+    count_df = count_by_country(partitioned_survey_df)
+    logger.info(count_df.collect())
+    input("Press Enter") # make sure code doesn't finish, so can see it in spark UI
+
+    logger.info("Finished HelloSpark")
+
+    spark.stop()
+```
+
+Use the "collect()" action here, because it returns the df as a Python list. "show()" is more useful for debugging. Append "spark.sql.shuffle.partitions = 2" to "spark.conf" file, to force this operation to create 2 partitions. 
+
+Run the code, wait for it to reach the input step. Then, go to "localhost:4040" Spark UI. Under the "Jobs" pane, can see there are 3 jobs, each job is further broken down into stages. 
+
+A list of all stages can be found under the "Stages" tab. Each stage is further broken down into tasks. These task are the unit of work that is finally assigned to executors. 
 
 ## Understanding your Execution Plan
 
