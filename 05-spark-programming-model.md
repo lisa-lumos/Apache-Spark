@@ -304,6 +304,48 @@ if __name__ == "__main__":
 The data in the HDFS is stored in a distributed storage. The data is stored in many partitions, and each node store one or more of these partitions. When spark read the data, it creates a logical in-memory data structure (a dataframe). The driver will then assign to each executor their share of partitions to process the data. While assigning partitions to these executors, Spark will try to allocate the partitions which are closest to the executors in the network, for utilize locality. 
 
 ## Spark Transformations and Actions
+Spark data processing is about creating a DAG of operations. 
+
+Narrow dependency transformation: A transformation that can be performed independently on a single partition, to produce valid results. Such as "where()". 
+
+Wide dependency transformation: A transformation that requires data from other partitions to produce valid results. Such as "groupBy()", "orderBy()", "join", "distinct", etc. Re-partition can be used to make sure all records of the same group are collected into the same partition. This "re-partition" is known as "shuffle and sort" operation, and is managed internally by Spark.  
+
+Lazy Evaluations. When the DAG of operations goes to the Spark driver, it will re-arrange them to optimize certain activities, and create an execution plan for the executors. The execution plan is triggered and terminated by an action (read/write/collect/show). 
+
+Transformations are lazy, but actions are evaluated immediately. 
+
+"HelloSpark.py": 
+```py
+from pyspark.sql import *
+from lib.logger import Log4J
+from lib.utils import get_spark_app_config
+
+if __name__ == "__main__":
+    conf = get_spark_app_config()
+    spark = SparkSession.builder \ 
+        .config(conf=conf) \
+        .getOrCreate()
+
+    logger = Log4J(spark)
+
+    if len(sys.argv) != 2:
+        logger.error("Usage: HelloSpark <filename>")
+        sys.exit(-1)
+
+    logger.info("Starting HelloSpark")
+
+    survey_df = load_survey_df(spark, sys.argv[1])
+    filtered_survey_df = survey_df.where("Age < 40") \
+        .select("Age", "Gender", "Country") \
+        .groupBy("Country")
+    survey_df.show() 
+
+    logger.info("Finished HelloSpark")
+
+    spark.stop()
+```
+
+
 
 
 ## Spark Jobs Stages and Task
