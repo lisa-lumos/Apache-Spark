@@ -388,6 +388,8 @@ Every Spark action (such as reading from a csv) is translated into a Spark job. 
 
 Each stage comes with is own DAG of internal operations. You can get the stage's DAG by clicking the Description link under the "Stages" pane. Reading a csv contains FileScan and MapPartitions in the DAG. 
 
+Stages are executed as parallel tasks, depending on the number of partitions, and availability of executor cores. 
+
 ## Unit Testing Spark Application
 For reading the csv file, the unit test can be: read the file, validate the number of records. 
 
