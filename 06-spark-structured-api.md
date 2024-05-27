@@ -11,7 +11,9 @@ So, a sophisticated data pipeline push you to use DataFrame APIs.
 The Dataset APIs are the language-native APIs in Scala and Java. So they are NOT available in dynamically-typed languages, such as Python. 
 
 ## Intro to Spark RDD API
+RDD is internally broken down into partitions to form a distributed collection. They are similar to DataFrames, but lack a row/col structure and schema. 
 
+RDD is fault-tolerant, because they also store information about how they are created, in case the executor fails/crashes. When it happens, the drive will notice it, and assign the same RDD partition to another executor. 
 
 ## Working with Spark SQL
 
