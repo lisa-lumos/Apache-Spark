@@ -49,17 +49,11 @@ if __name__ == "__main__":
 ```
 
 ## Spark SQL Engine and Catalyst Optimizer
+The Spark SQL Engine is a powerful compiler, that optimizes your code, and generates efficient Java Bytecode. It works in 4 phases:
+1. Analysis. It analyzes your code, resolve the col/table/view names, sql functions, etc, and generate an Abstract Syntax Tree for the code. 
+2. Logical optimization. Apply rule-based optimization, and construct different execution plans. Then, the Catalyst Optimizer will use cost-based optimization to assign a cost to each plan. This includes predicate pushdown, projection pruning, boolean expression simplification, and constant folding. 
+3. Physical planning. The SQL Engine picks the most effective logical plan, and generates a physical plan (aka, a set of RDD operations), which determines how the plan will execute on the Spark cluster.
+4. Code generation. Generates efficient Java bytecode to run on each machine. 
 
-
-
-
-
-
-
-
-
-
-
-
-
+As a Spark programmer, all we need to do is sticking to the DataFrame APIs, and Spark SQL. 
 
