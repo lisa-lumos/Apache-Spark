@@ -18,10 +18,15 @@ Data sink. The final destination of the processed data that you write to. Could 
 
 Spark also allow you to directly write the data to many external sources, such as JDBC databases, Cassandra, MongoDB. Thought it is not recommended to do so, same reason as we don't read from these systems. 
 
-
-
 ## Spark DataFrameReader API
+The "mode" option specifies behaviors when encountering a malformed record. The modes are:
+- permissive. Default. Set all the fields to null for the corrupt record, and put it in a string col named "_corrupt_record"
+- dropMalformed. Drop the corrupt record. 
+- failFast. Raises an exception, and terminates immediately, up on a malformed record. 
 
+The "schema" is optional in many cases. Sometimes you can infer the schema. Some data formats came with a well-defined schema. 
+
+Recommend to avoid using shortcuts such as "csv()" methods. Using the standard style add to the code maintainability. 
 
 ## Reading CSV, JSON and Parquet files
 
