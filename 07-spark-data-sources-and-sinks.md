@@ -140,6 +140,59 @@ MaxRecordsPerFile is an option. Can be used with or without "partitionBy()". Hel
 
 ## Writing Your Data and Managing Layout
 
+"DataSinkDemo.py":
+```py
+from pyspark.sql import *
+from pyspark.sql.functions import spark_partition_id
+from lib.logger import Log4j
+
+if __name__ == "__main__":
+    spark = SparkSession \
+        .builder \
+        .master("local[3]") \
+        .appName("SparkSchemaDemo") \
+        .getOrCreate()
+
+    logger = Log4j(spark)
+
+    flightTimeParquetDF = spark.read \
+        .format("parquet") \
+        .load("dataSource/flight*.parquet")
+
+    # see 2 partitions, but only 1 partition has data, so only saved to 1 file
+    logger.info("Num Partitions before: " + str(flightTimeParquetDF.rdd.getNumPartitions()))
+    flightTimeParquetDF.groupBy(spark_partition_id()).count().show()
+
+    # now have 5 equal partitions
+    partitionedDF = flightTimeParquetDF.repartition(5)
+    logger.info("Num Partitions after: " + str(partitionedDF.rdd.getNumPartitions()))
+    partitionedDF.groupBy(spark_partition_id()).count().show()
+
+    # number of files depends on number of partitions
+    partitionedDF.write \
+        .format("avro") \
+        .mode("overwrite") \
+        .option("path", "dataSink/avro/") \
+        .save()
+
+    # because of partitionBy(...), 
+    # will have many folders named by "OP_CARRIER=..."
+    # then in each folder, many subfolders name by "ORIGIN=..."
+    # this can improve the performance of some read operations
+    # also, these 2 cols are not included in the data file, 
+    # because they are redundant
+    flightTimeParquetDF.write \
+        .format("json") \
+        .mode("overwrite") \
+        .option("path", "dataSink/json/") \
+        .partitionBy("OP_CARRIER", "ORIGIN") \
+        .option("maxRecordsPerFile", 10000) \
+        .save()
+```
+
+Partitioning your data to equal chunks may not make a good sense in most of the cases. We do want to do the partitioning, because we will be working with massive volumes. Also, partitioning the data have benefits, like parallel processing, and partition elimination for certain read operations. 
+
+In real life scenario, the instructor prefer the file size to be between 0.5GB to a few GBs. Control file size by "maxRecordsPerFile" option. 
 
 ## Spark Databases and Tables
 
