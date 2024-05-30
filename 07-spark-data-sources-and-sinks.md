@@ -195,7 +195,17 @@ Partitioning your data to equal chunks may not make a good sense in most of the 
 In real life scenario, the instructor prefer the file size to be between 0.5GB to a few GBs. Control file size by "maxRecordsPerFile" option. 
 
 ## Spark Databases and Tables
+Apache Spark is not only a set of APIs and a processing engine. It is a database itself. So you can create databases, and tables/views in side them. 
 
+A table has two parts, the table data, and table metadata. 
+- The table data live as data files in your distributed storage, you can control the file type, by default, it is a parquet file. 
+- The metadata is stored in a meta-store called catalog. It hold info on the table and its data, such as schema, table name, database name, col names, partitions, the physical location of the data files. By default, Spark comes with an in-memory catalog, which is maintained per spark session, and it goes away when the session ends. 
+
+Spark table:
+1. Managed tables. Spark manages both metadata and the data. "spark.sql.warehouse.dir" directory is the base location where your managed table data are stored, it is set up by your cluster admin, and you should not change it at runtime. If you drop a managed table, spark will drop the data files and the metadata. 
+2. Unmanaged tables (external tables). Only metadata is stored. If you drop an unmanaged table, spark will only drop the metadata. 
+
+We prefer using managed tables, because they offer additional features such as bucketing and sorting. All the future improvements in Spark SQL will also target managed tables. 
 
 ## Working with Spark SQL Tables
 
