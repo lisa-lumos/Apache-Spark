@@ -208,13 +208,66 @@ Spark table:
 We prefer using managed tables, because they offer additional features such as bucketing and sorting. All the future improvements in Spark SQL will also target managed tables. 
 
 ## Working with Spark SQL Tables
+Create a managed table, and access the catalog. 
 
+Spark depends on Hive metastore, so need to "enableHiveSupport()". 
 
+If you create a managed table in a Spark databse, then your data is available to other sql compliant tools, instead of having to be read into a df. Spark database tables can be accessed using SQL expressions, over JDBC/ODBC connectors. So you can use 3rd-party tools such as Tableau, PowerBI, Talend, etc. Note that plain data files are not accessible through JDBC/ODBC interface. 
 
+"SparkSQLTableDemo.py":
+```py
+from pyspark.sql import *
+from lib.logger import Log4j
 
+if __name__ == "__main__":
+    spark = SparkSession \
+        .builder \
+        .master("local[3]") \
+        .appName("SparkSQLTableDemo") \
+        .enableHiveSupport() \
+        .getOrCreate()
 
+    logger = Log4j(spark)
 
+    flightTimeParquetDF = spark.read \
+        .format("parquet") \
+        .load("dataSource/")
 
+    # create a db
+    spark.sql("CREATE DATABASE IF NOT EXISTS AIRLINE_DB")
+    # set db context
+    spark.catalog.setCurrentDatabase("AIRLINE_DB")
 
+    # create a table
+    flightTimeParquetDF.write \
+        .mode("overwrite") \
+        # .partitionBy("ORIGIN", "OP_CARRIER") \
+        .saveAsTable("flight_data_tbl")
+        # or .saveAsTable("airline_db.flight_data_tbl"), with db name
 
+    # access the catalog
+    logger.info(spark.catalog.listTables("AIRLINE_DB"))
+
+```
+
+Run the code, in the project folder, see the "spark-warehouse" folder, which is the spark sql warehouse dir. Inside it, there is a folder "airline_db.db" folder, and inside it "flight_data_tbl" folder, and inside it the daa files for the folder. 
+
+There is also a "metastore_db" folder in the project folder, which is the persistent metadata store. 
+
+When you run this code on a local machine, these folders are created in your current directory. However, in a cluster environment, both of these are configured by your cluster admin, and it will be a common location across all the Spark applications. 
+
+Note that you should not partition your data for a col that has too many unique values. Instead, you can use the bucketBy():
+```python
+    flightTimeParquetDF.write \
+        .format("csv") \
+        .mode("overwrite") \
+        .bucketBy(5, "ORIGIN", "OP_CARRIER") \
+        # 5 buckets, so will have 5 files in the table folder
+        .sortBy("ORIGIN", "OP_CARRIER") \
+        .saveAsTable("flight_data_tbl")
+```
+
+Bucket mechanism: it will take the hash of both origin + op_carrier, and take a mod(5), so that each unique key combination will land into the same bucket (file). Sometimes, these buckets can improve your join operations significantly. 
+
+If the records in the bucket are sorted, they might be more ready to use for certain operations. 
 
