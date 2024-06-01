@@ -20,6 +20,7 @@ from pyspark.sql.types import *
 
 def to_date_df(df, format, field): # a function that convert a sting col to date 
     return df.withColumn(field, to_date(col(field), format))
+    #                    field is string of col name
 
 # cell
 my_schema = StructType([
@@ -128,8 +129,42 @@ class RowDemoTestCase(TestCase):
 ```
 
 ## Dataframe Rows and Unstructured data
+Assume you have a text file of logs. You read it into a df, all you get is a col of strings. You need to create new cols from it. 
 
+"LogFIleDemo.py":
+```py
+from pyspark.sql import *
+from pyspark.sql.functions import regexp_extract, substring_index
 
+if __name__ == "__main__":
+    spark = SparkSession \
+        .builder \
+        .master("local[3]") \
+        .appName("LogFileDemo") \
+        .getOrCreate()
+
+    file_df = spark.read.text("data/apache_logs.txt")
+    file_df.printSchema() # get a "value" col of string type
+
+    # the regex that matches each row, to extract fields
+    log_reg = r'^(\S+) (\S+) (\S+) \[([\w:/]+\s[+\-]\d{4})\] "(\S+) (\S+) (\S+)" (\d{3}) (\S+) "(\S+)" "([^"]*)'
+
+    # create a new df with 4 cols
+    logs_df = file_df.select(
+        regexp_extract('value', log_reg, 1).alias('ip'),
+        regexp_extract('value', log_reg, 4).alias('date'),
+        regexp_extract('value', log_reg, 6).alias('request'),
+        regexp_extract('value', log_reg, 10).alias('referrer')
+    )
+
+    # now have a schema, so can do analysis
+    logs_df \
+        .where("trim(referrer) != '-' ") \
+        .withColumn("referrer", substring_index("referrer", "/", 3)) \
+        .groupBy("referrer") \
+        .count() \
+        .show(100, truncate=False)
+```
 
 ## Working with Dataframe Columns
 
