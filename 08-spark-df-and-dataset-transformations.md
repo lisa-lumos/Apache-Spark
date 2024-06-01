@@ -167,8 +167,79 @@ if __name__ == "__main__":
 ```
 
 ## Working with Dataframe Columns
+Most of the df transformations are about transforming the columns. 
 
+Spark databricks notebook:
+```py
+# cell
+# check the sample datasets provided by databricks
+%fs ls /databricks-datasets/
 
+# cell
+%fs ls /databricks-datasets/airlines/
+
+# cell
+# see the csv data of one file
+%fs head /databricks-datasets/airlines/part-00000
+
+# cell
+airlinesDF = spark.read \
+    .format("csv") \
+    .option("header", "true") \
+    .option("inferSchema","true") \
+    .option("samplingRatio", "0.0001") \
+    .load("/databricks-datasets/airlines/part-00000")
+
+# Spark df columns are Column type objects
+# the select() method accepts column strings or column objects. 
+
+# cell
+# access a column using "column strings"
+airlinesDF.select("Origin", "Dest", "Distance" ).show(10)
+
+# cell
+# access a column using "column objects"
+# column("Origin") uses the column() function
+# col("Dest") uses the col() function, which is shorthand of column() function
+# all 4 below col selections are the same
+from pyspark.sql.functions import *
+airlinesDF.select(
+    column("col_name1"), 
+    col("col_name2"), 
+    "col_name3", 
+    airlinesDF.col_name4
+).show(10)
+     
+# cell
+airlinesDF.select(
+    "Origin", 
+    "Dest", 
+    "Distance", 
+    "Year",
+    "Month",
+    "DayofMonth"
+).show(10)
+
+# cell
+# use expr() function to convert an expression to a column object
+# this method is preferred by most people
+airlinesDF.select(
+  "Origin", 
+  "Dest", 
+  "Distance", 
+  expr("to_date(concat(Year, Month, DayofMonth), 'yyyyMMdd') as FlightDate")
+).show(10)
+
+# cell
+# use column objects. used less common
+airlinesDF.select(
+    "Origin", 
+    "Dest", 
+    "Distance", 
+    to_date(concat("Year", "Month", "DayofMonth"), "yyyyMMdd").alias("FlightDate")
+).show(10)
+
+```
 
 ## Creating and Using UDF
 
