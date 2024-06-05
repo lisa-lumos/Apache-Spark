@@ -242,9 +242,108 @@ airlinesDF.select(
 ```
 
 ## Creating and Using UDF
+"UDFDemo.py":
+```py
+import re
+from pyspark.sql import *
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+from lib.logger import Log4j
 
 
+def parse_gender(gender):
+    female_pattern = r"^f$|f.m|w.m"
+    male_pattern = r"^m$|ma|m.l"
+    if re.search(female_pattern, gender.lower()):
+        return "Female"
+    elif re.search(male_pattern, gender.lower()):
+        return "Male"
+    else:
+        return "Unknown"
+
+
+if __name__ == "__main__":
+    spark = SparkSession \
+        .builder \
+        .appName("UDF Demo") \
+        .master("local[2]") \
+        .getOrCreate()
+
+    logger = Log4j(spark)
+
+    survey_df = spark.read \
+        .option("header", "true") \
+        .option("inferSchema", "true") \
+        .csv("data/survey.csv")
+
+    survey_df.show(10)
+
+    # method 1: use a UDF in a column object expression
+    # register the function with the driver, and make it a dataframe UDF
+    parse_gender_udf = udf(parse_gender, returnType=StringType())
+    logger.info("Catalog Entry:")
+    [logger.info(r) for r in spark.catalog.listFunctions() if "parse_gender" in r.name]
+    # withColumn() allow you to transform or add a single column, 
+    # without impacting other columns in the df
+    survey_df2 = survey_df.withColumn("Gender", parse_gender_udf("Gender"))
+    survey_df2.show(10)
+
+    # method 2: use a UDF as a SQL function
+    # register the UDF to the catalog
+    spark.udf.register("parse_gender_udf", parse_gender, StringType())
+    logger.info("Catalog Entry:")
+    [logger.info(r) for r in spark.catalog.listFunctions() if "parse_gender" in r.name]
+    # note the expr() here
+    survey_df3 = survey_df.withColumn("Gender", expr("parse_gender_udf(Gender)"))
+    survey_df3.show(10)
+```
 
 ## Misc Transformations
+"MiscDemo.py":
+```py
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, monotonically_increasing_id, when, expr
+from pyspark.sql.types import *
 
+from lib.logger import Log4j
 
+if __name__ == "__main__":
+    spark = SparkSession \
+        .builder \
+        .appName("Misc Demo") \
+        .master("local[2]") \
+        .getOrCreate()
+
+    logger = Log4j(spark)
+
+    # quick an dirty way to create a df
+    data_list = [("Ravi", "28", "1", "2002"),
+                 ("Abdul", "23", "5", "81"),  # 1981
+                 ("John", "12", "12", "6"),  # 2006
+                 ("Rosy", "7", "8", "63"),  # 1963
+                 ("Abdul", "23", "5", "81")]  # 1981
+
+    # toDF() attaches a schema to the df
+    raw_df = spark.createDataFrame(data_list).toDF("name", "day", "month", "year").repartition(3)
+    raw_df.printSchema()
+
+    # the "id" col will be new, because it doesn't already exist in df
+    # also set the id col as mono inc 
+    final_df = raw_df.withColumn("id", monotonically_increasing_id()) \
+        # cast to a different data type
+        .withColumn("day", col("day").cast(IntegerType())) \
+        .withColumn("month", col("month").cast(IntegerType())) \
+        .withColumn("year", col("year").cast(IntegerType())) \
+        # can also use sql here. 
+        .withColumn("year", when(col("year") < 20, col("year") + 2000)
+                    .when(col("year") < 100, col("year") + 1900)
+                    .otherwise(col("year"))) \
+        .withColumn("dob", expr("to_date(concat(day,'/',month,'/',year), 'd/M/y')")) \
+        .drop("day", "month", "year") \
+        .dropDuplicates(["name", "dob"]) \
+        # .sort(expr("dob desc"))
+        .sort(col("dob").desc())
+
+    final_df.show()
+```
