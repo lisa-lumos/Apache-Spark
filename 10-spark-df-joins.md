@@ -60,10 +60,21 @@ if __name__ == "__main__":
 
     product_renamed_df = product_df.withColumnRenamed("qty", "reorder_qty")
 
+    # inner join
     order_df.join(product_renamed_df, join_expr, "inner") \
         .drop(product_renamed_df.prod_id) \
         .select("order_id", "prod_id", "prod_name", "unit_price", "list_price", "qty") \
         .show()
+
+    # left outer join
+    order_df.join(product_renamed_df, join_expr, "left") \
+        .drop(product_renamed_df.prod_id) \
+        .select("order_id", "prod_id", "prod_name", "unit_price", "list_price", "qty") \
+        .withColumn("prod_name", expr("coalesce(prod_name, prod_id)")) \
+        .withColumn("list_price", expr("coalesce(list_price, unit_price)")) \
+        .sort("order_id") \
+        .show()
+
 ```
 
 When you do select *, there is no complains about the duplicated prod_id, because every df has a unique id in the catalog, and the Spark engine always works using these internal ids. However, when we explicitly select column names, if same name maps to different ids, spark will complain about the ambiguity. 
@@ -71,9 +82,6 @@ When you do select *, there is no complains about the duplicated prod_id, becaus
 The solution to this ambiguity error in join:
 1. rename the related cols before the join
 2. or, drop the conflicting col after the join, before the selection. 
-
-## Outer Joins in Dataframe
-
 
 ## Internals of Spark Join and shuffle
 
