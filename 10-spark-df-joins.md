@@ -84,10 +84,26 @@ The solution to this ambiguity error in join:
 2. or, drop the conflicting col after the join, before the selection. 
 
 ## Internals of Spark Join and shuffle
+Spark joins is one of the most common causes for slowing down your application. 
 
+Shuffle join. Most common. Shuffle operation divides the matched join keys evenly across all executors, both from the left table and the right table. So that part keys from both left/right table can in one executor. Tuning your join operation is all about optimizing the shuffle operation. `spark.conf.set('spark.sql.shuffle.partitions', 3)` ensures you get 3 partitions after the shuffle. 
+
+Broadcast join. 
 
 ## Optimizing your joins
+Reduce df size. Cut down the size of df as early as possible. filter early, before the join.
 
+Parallelism. If you want to take advantage of a large cluster, you should increase the number of shuffle partitions But, if you have 500 executors, but you configured to have 400 shuffle partitions, the max parallelism is limited to 400. Further, if you have only 200 unique keys, then you can have only 200 shuffle partitions, even if you define 400 shuffle partitions, only 200 of them will have data. 
+
+Skew. Watch out for the time taken by individual tasks, and the amount of data processed by the join task. If some tasks are taking significantly longer than other tasks, you can fix your join key, or apply some hack to break the larger partition into more than one partitions. 
+
+Large to Large(df cannot fit into a single executor's ram). Will always be a shuffle join. 
+
+Large to Small. Can take advantage of broadcast join. Instead of shuffle and send the large data to many executors, just sent the small df to every executor. So much less amount of data is sent over the network. 
+
+In most of the cases, Spark will automatically use the broadcast join, when one of the df is smaller and can be broadcasted. 
+
+But you know your data better than Spark. To enforce a broadcast join, do like this: `join_df = left_df.join(broadcast(right_df), join_expr, "inner")`. 
 
 ## Implementing Bucket Joins
 
