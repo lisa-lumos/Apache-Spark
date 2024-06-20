@@ -106,33 +106,53 @@ In most of the cases, Spark will automatically use the broadcast join, when one 
 But you know your data better than Spark. To enforce a broadcast join, do like this: `join_df = left_df.join(broadcast(right_df), join_expr, "inner")`. 
 
 ## Implementing Bucket Joins
+Shuffle join is almost unavoidable in case of a large to large dataset join. However, in some cases, you can prepare in advance, and avoid the shuffle at the time of joining. 
 
+If you have two datasets that you already know you are going to join in the future, then it is advisable to bucket both of your datasets using your join key. Bucketing your dataset may also require a shuffle, but this shuffle is needed only once, when you create your bucket. Once bucket is created, you can join these datasets without a shuffle, and do it as many times as you need. 
 
+"BucketJoinDemo.py":
+```py
+from pyspark.sql import SparkSession
 
+from lib.logger import Log4j
 
+if __name__ == "__main__":
+    spark = SparkSession \
+        .builder \
+        .appName("Bucket Join Demo") \
+        .master("local[3]") \
+        .enableHiveSupport() \
+        .getOrCreate()
 
+    logger = Log4j(spark)
+    df1 = spark.read.json("data/d1/")
+    df2 = spark.read.json("data/d2/")
+    # df1.show()
+    # df2.show()
 
+    spark.sql("CREATE DATABASE IF NOT EXISTS MY_DB")
+    spark.sql("USE MY_DB")
 
+    # coalesce to a single partition first, with coalesce(1)
+    # bucketBy(num_of_buckets, bucket_by_key_name)
+    df1.coalesce(1).write \
+        .bucketBy(3, "id") \
+        .mode("overwrite") \
+        .saveAsTable("MY_DB.flight_data1")
 
+    df2.coalesce(1).write \
+        .bucketBy(3, "id") \
+        .mode("overwrite") \
+        .saveAsTable("MY_DB.flight_data2")
 
+    df3 = spark.read.table("MY_DB.flight_data1")
+    df4 = spark.read.table("MY_DB.flight_data2")
 
+    spark.conf.set("spark.sql.autoBroadcastJoinThreshold", -1) # disable broadcast join
+    join_expr = df3.id == df4.id
+    join_df = df3.join(df4, join_expr, "inner")
 
+    join_df.collect()
+    input("press a key to stop...")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```
