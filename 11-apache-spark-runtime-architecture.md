@@ -1,0 +1,34 @@
+# 11. Apache Spark Runtime Architecture
+Spark is a distributed computing platform. Spark application is a distributed application, so it needs a cluster. Hadoop YARN cluster and Kubernetes cluster covers 90%+ of spark cluster market share. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
