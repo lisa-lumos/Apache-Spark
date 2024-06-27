@@ -1,0 +1,49 @@
+# 11. Spark Architecture
+## Apache Spark Runtime Architecture
+Spark is a distributed computing platform. Spark application is a distributed application, so it needs a cluster. Hadoop YARN cluster and Kubernetes cluster covers 90%+ of spark cluster market share. 
+
+Assume you use the spark-submit command to submit your spark app to the cluster. The request will go to the YARN resource manager. The YARN RM will create one Application Master (AM) container on a worker node, and start your app's main() method in the container. A container is an isolated virtual runtime environment, which comes with some CPU and memory allocation.
+
+Assume your app is a pyspark app. Note that Spark is written in Scala, and it runs in the Java Virtual Machine (JVM). 
+
+Scala is a JVM language, and it always runs in the JVM. But Spark developers wanted to bring this to Python developers, so they created a Java wrapper on top of the Scala code. Then, they created a Python wrapper (known as PySpark) on top of the Java wrappers.
+
+You have Python code in your main() method, which is designed to start a Java main() method internally. So your PySpark application will start a JVM application. Then, the PySpark wrapper will call the Java wrapper, using the Py4J connection (which allows a Python app to call a Java app), and the Java wrapper runs Scala code in the JVM. 
+
+The PySpark main method is the PySpark Driver, and the JVM application is the Application Driver. (for the driver, not the executor)
+
+But if your code is written in Scala instead of PySpark, you will only have an Application Driver. 
+
+The driver start first, then it will request the cluster RM for more containers, and start executors in these new containers (they run JVM). Note that the driver and executor can use the CPU and memory given to the container, they cannot use CPU or Memory from the workers. 
+
+If you use some additional Python libraries, that are not part of PySpark, even if you are creating UDFs in Python, then on each executor container, besides the JVM, you also have a Python worker. 
+
+## Spark Submit, and important options
+
+
+## Deploy modes - Client and Cluster mode
+
+
+## Spark Jobs - Stage, Shuffle, Task, Slots
+
+
+## Spark SQL Engine and Query Planning
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
