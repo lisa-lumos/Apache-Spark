@@ -19,7 +19,26 @@ The driver start first, then it will request the cluster RM for more containers,
 If you use some additional Python libraries, that are not part of PySpark, even if you are creating UDFs in Python, then on each executor container, besides the JVM, you also have a Python worker. 
 
 ## Spark Submit, and important options
+There are many ways to submit a Spark application to your test/prod cluster. The most commonly used way is the spark-submit command-line tool. 
 
+The general structure of the spark-submit command:
+```
+spark-submit --class <main-class> --master <master-url> --deploy-mode <deploy-mode> <application-jar> [application-args]
+```
+A list of the most commonly used options:
+- `--class`: Not applicable for PySpark, only for Java/Scala
+- `--master`: yarn, local[3]
+- `--deploy-mode`: client or cluster
+- `--conf`: spark.executor.memoryOverhead=0.20
+- `--driver-cores`: 2
+- `--driver-memory`: 8G
+- `--num-executors`: 4
+- `--executor-cores`: 4
+- `--executor-memory`: 16G
+
+Note the driver/executor cores and ram setting are for driver/executor containers. 
+
+For example: `spark-submit --master yarn --deploy-mode cluster --driver-cores 2 --driver-memory 8G --num-executors 4 --executor-cores 4 --executor-memory 16G hello-spark.py`. 
 
 ## Deploy modes - Client and Cluster mode
 
