@@ -41,7 +41,17 @@ Note the driver/executor cores and ram setting are for driver/executor container
 For example: `spark-submit --master yarn --deploy-mode cluster --driver-cores 2 --driver-memory 8G --num-executors 4 --executor-cores 4 --executor-memory 16G hello-spark.py`. 
 
 ## Deploy modes - Client and Cluster mode
+In the cluster mode, the spark-submit will reach the YARN resource manager, requesting it to start the driver in the AM (application master) container. So it will start the AM container on a worker node in the cluster. Then this driver will request YARN to start some executor containers, and hand them over to the driver. 
 
+In the client mode, the spark-submit doesn't go to the YARN resource manager for starting an AM container. Instead, the spark-submit command will start the driver JVM directly on the client machine (your local machine). Then, the driver will reach out to the YARN resource manager, requesting executor containers, the YARN RM will start the executor containers and handover them to the driver. The driver then will start executors in those containers to do the work. 
+
+Basically, in cluster mode, your driver runs in the cluster, but in client mode, your driver runs in your client machine. Everything else are the same. 
+
+You will almost always submit your application in cluster mode:
+- It allows you to submit the application, and log off from the client machine. 
+- Your app runs faster, because your driver is closer to the executors. 
+
+The client mode is designed for interactive workloads. e.g., spark-shell runs your code in client mode. Spark notebooks also use the client mode. When a driver is local, it can easily communicate with you, get the results and show it back to you. Also, if you log off from the client machine, or stop the shell and quit, the driver dies, the YARN RM knows that since the driver is dead, the executors assigned to the driver are now orphans, so the RM will terminate the executors. 
 
 ## Spark Jobs - Stage, Shuffle, Task, Slots
 
