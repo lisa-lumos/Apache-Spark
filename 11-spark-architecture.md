@@ -54,7 +54,60 @@ You will almost always submit your application in cluster mode:
 The client mode is designed for interactive workloads. e.g., spark-shell runs your code in client mode. Spark notebooks also use the client mode. When a driver is local, it can easily communicate with you, get the results and show it back to you. Also, if you log off from the client machine, or stop the shell and quit, the driver dies, the YARN RM knows that since the driver is dead, the executors assigned to the driver are now orphans, so the RM will terminate the executors. 
 
 ## Spark Jobs - Stage, Shuffle, Task, Slots
+Transformations are used to process/convert data, and they are categorized into:
+- Narrow Dependency transformations. Can run in parallel on each data partition. select/filter/withColumn/drop(), etc
+- Wide Dependency transformation. Require some kind of grouping, before they can be applied. groupBy/join/cube/rollup/agg(), etc
 
+Actions trigger some work, such as writing df to disk, computing the transformations, collecting the results. read/write/collect/take/count(), etc.
+
+All spark actions trigger one/more spark jobs. 
+
+An example spark code does these 4 steps:
+1. read a csv into a df, infer the schema (it is an action)
+2. repartition the df into 2 partitions (which is a wide dependency transformation)
+3. filter (narrow transformation), select(narrow transformation), group(wide transformation), then count the df (narrow transformation).
+4. run df.collect().mkString("->"), write into the log. (it is an action)
+
+This code has two code blocks (a block ends with an action):
+1. block 1 contains step 1
+2. block 2 contains step 2-4
+
+Note that a large application may have many code blocks. This example only has 2. 
+
+A typical spark application looks like a set of code blocks, and Spark will run each code block as one "spark job". Because each action creates a spark job, that contains all the transformations of its code block. 
+
+Looking at the block #2: the driver will break the job into tasks, and assign them to the executors. 
+
+Spark driver creates a logical query plan for each Spark job. This job's logical query plan: df -> repartition -> where -> select -> group by -> count -> df
+
+This plan is then further break down into stages, with each stage ends with a wide dependency transformation, unless it is the part after the last wide dependency transformation, which itself is the last stage. So if you have n wide dependencies, your plan will have n+1 stages. 
+
+So, spark cannot run these stages in parallel. Because the output of the first stage is the input of the next stage. 
+
+So, the stages of block 2 are (runtime execution plan):
+1. repartition. Contains a task.
+2. filter, select, group by. Contains two tasks that runs in parallel, because there are 2 partitions now. 
+3. count. Contains two tasks that runs in parallel, because there are 2 partitions. 
+
+The output of a stage is stored in an exchange buffer (Write Exchange). The next stage starts with another exchange buffer (Read Exchange). Spark is distributed, so the Write Exchange and the Read Exchange might be on two different worker nodes. So sometimes need a copy of data partitions from the write exchange to the read exchange, which is the Shuffle/Sort operation. 
+
+The Shuffle/Sort is an expensive operation in the Spark cluster. It requires a write exchange buffer, and a read exchange buffer. The data from the write exchange buffer is sent to the read exchange buffer over the network. 
+
+The number of task in a stage is equal to the number of input partitions. 
+
+The task is the most critical concept of a Spark job. It is the smallest unit of work in a Spark job. The Spark driver assigns tasks to the executors, and asks them to do the work. 
+
+The executor needs the task code, and data partition, to perform the work. 
+
+Assume your Spark cluster has a driver, and 4 executors, with each executor has one JVM process. Assume you assigned 4 CPU cores to each executor, so each executor JVM can create 4 parallel threads (aka, the slot capacity of the executor, the 4 executor slots on each executor). 
+
+The driver knows how many slots each executor has, and it will assign tasks to fit in the executor slots. Assume a stage has 10 input data partitions, so it has 10 tasks, then the driver will assign these 10 tasks to 16 slots, so there will be 6 slots sits idle, because we do not have enough tasks for all the slots. Assume you have 32 tasks for the next stage. The driver will schedule 16 tasks in the available slots, the remaining 16 will wait for slots to become available again. 
+
+The collect() action requires each task to send data back to the driver, so the tasks of the last stage will send the result back to the driver over the network. The driver will collect data from all the tasks, and present to you. 
+
+If you had an action to write the result in a data file, then all the tasks will write a data file partition, and send the partition details to the driver. 
+
+The driver considers the job done when all the task are successful. If any task fails, the driver might want to retry it, so it can restart the task at a different executor. If all retries also fail, then the driver returns an exception, and marks the job as failed. 
 
 ## Spark SQL Engine and Query Planning
 
