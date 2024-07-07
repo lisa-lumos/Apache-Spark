@@ -110,22 +110,16 @@ If you had an action to write the result in a data file, then all the tasks will
 The driver considers the job done when all the task are successful. If any task fails, the driver might want to retry it, so it can restart the task at a different executor. If all retries also fail, then the driver returns an exception, and marks the job as failed. 
 
 ## Spark SQL Engine and Query Planning
+Apache Spark provides 2 prominent interfaces to work with data:
+1. Spark SQL. Compliant with ANSI SQL2003 standard. 
+2. Dataframe API, which internally uses Dataset APIs (which are not available in PySpark). Allows for functional programming. 
 
+When you use Dataframe API, spark will take action and all its preceding transformations to consider it a single job. If you write a SQL expression, Spark considers one SQL expression as one job. 
 
+User creates the logical query plan, which then goes to the Spark SQL engine. Note that no matter you use Dataframe APIs or SQL, they all will go to the Spark SQL engine. 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Spark SQL Engine will process your logical plan in 4 stages:
+1. Analysis stage. Parse your code for errors, and incorrect names, etc, and create a fully resolved logical plan. It looks up the catalog to resolve column names, data types, etc. 
+2. Logical optimization. Apply the standard rule-based optimizations to the logical plan, and create an Optimized logical plan. 
+3. Physical planning. Takes a logical plan, and generate one/more physical plans. Apply cost-based optimization (calculate each physical plan's cost, and select the plan with the least cost). 
+4. Code generation. The best physical plan goes into code generation, and the engine generates RDD operations.  
