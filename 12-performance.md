@@ -46,8 +46,14 @@ If both the Storage Memory pool and the Executor Memory pool are fully occupied,
 
 In general, Spark recommends 2 or more cores per executor, but you should not go beyond 5 cores, which will cause excessive memory management overhead and contention. 
 
-## Spark Adaptive Query Execution
+## Spark Adaptive Query Execution (AQE)
+A new feature released in Apache Spark 3.0. 
 
+Dynamically coalescing shuffle partitions.
+
+Dynamically switching join strategies.
+
+Dynamically optimizing skew joins. 
 
 ## Spark AQE Dynamic Join Optimization
 
