@@ -47,13 +47,23 @@ If both the Storage Memory pool and the Executor Memory pool are fully occupied,
 In general, Spark recommends 2 or more cores per executor, but you should not go beyond 5 cores, which will cause excessive memory management overhead and contention. 
 
 ## Spark Adaptive Query Execution (AQE)
-A new feature released in Apache Spark 3.0. 
+A new feature released in Apache Spark 3.0. You must enable it for it to work. 
 
-Dynamically coalescing shuffle partitions.
+AQE does:
+- Dynamically coalescing shuffle partitions.
+- Dynamically switching join strategies.
+- Dynamically optimizing skew joins. 
 
-Dynamically switching join strategies.
+## Spark AQE coalescing shuffle partitions
+Assume you group by col A, and there are only 5 unique values in col A. The shuffle sort operation will put A = val1 rows into partition 1, and A = val2 rows into partition 2, etc, so only 5 partitions are actually needed. Also, each partition may be of different size, because different number of rows are under different values of the group key (data skew). Note that by default, the value of `spark.sql.shuffle.partitions` is 200. Note that data changes, queries are also varies, so it is almost impossible to manually set a perfect value for it. 
 
-Dynamically optimizing skew joins. 
+AQE will take care of setting the number of your shuffle partitions. During shuffle/sort, it will dynamically compute the statistics in partitions, and dynamically set the shuffle partitions for the next stage. It might combine two small partitions into one, so that less tasks will be needed in the next stage, and that their run time is more comparable. 
+
+To enable AQE, use `spark.sql.adaptive.enabled` param. To tune AQE, use:
+- `spark.sql.adaptive.coalescePartitions.enabled`. Default to true. 
+- `spark.sql.adaptive.coalescePartitions.initialPartitionNum`. max num of partitions. 
+- `spark.sql.adaptive.coalescePartitions.minPartitionNum`. 
+- `spark.sql.adaptive.advisoryPartitionSizeInBytes`. Default is 64MB. 
 
 ## Spark AQE Dynamic Join Optimization
 
