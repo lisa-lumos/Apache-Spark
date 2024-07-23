@@ -57,7 +57,7 @@ AQE does:
 ## Spark AQE coalescing shuffle partitions
 Assume you group by col A, and there are only 5 unique values in col A. The shuffle sort operation will put A = val1 rows into partition 1, and A = val2 rows into partition 2, etc, so only 5 partitions are actually needed. Also, each partition may be of different size, because different number of rows are under different values of the group key (data skew). Note that by default, the value of `spark.sql.shuffle.partitions` is 200. Note that data changes, queries are also varies, so it is almost impossible to manually set a perfect value for it. 
 
-AQE will take care of setting the number of your shuffle partitions. During shuffle/sort, it will dynamically compute the statistics in partitions, and dynamically set the shuffle partitions for the next stage. It might combine two small partitions into one, so that less tasks will be needed in the next stage, and that their run time is more comparable. 
+AQE will take care of setting the number of your shuffle partitions. During shuffle/sort, it will dynamically compute the statistics in on the exchange data, during the shuffle, and dynamically set the shuffle partitions for the next stage. It might combine two small partitions into one, so that less tasks will be needed in the next stage, and that their run time is more comparable. 
 
 To enable AQE, use `spark.sql.adaptive.enabled` param. To tune AQE, use:
 - `spark.sql.adaptive.coalescePartitions.enabled`. Default to true. 
@@ -66,7 +66,11 @@ To enable AQE, use `spark.sql.adaptive.enabled` param. To tune AQE, use:
 - `spark.sql.adaptive.advisoryPartitionSizeInBytes`. Default is 64MB. 
 
 ## Spark AQE Dynamic Join Optimization
+Assume you are joining two large tables, then applying a filter on table 2. Without analyzing the filter first, you might implement a sort-merge join. But up on evaluating the filter, you notice that only a few mb is from table 2. So you should use a broadcast hash join. 
 
+Regularly, spark execution plan is created before it starts the job execution, so it wouldn't have known the size of the filtered table, unless you keep your table and column statistics up-to-date, such as the column histogram for your filter column. Alternatively, you can enable AQE, who compute the statistics on the exchange data, during the shuffle, and dynamically change the execution plan. In this case, it will skip the sort operation. 
+
+If you use AQE, do not disable local shuffle reader `spark.sql.adaptive.localShuffleReader.enabled = true` (it is enabled by default). This is designed to further optimize the AQE broadcast join, by reducing the network traffic.  
 
 ## Handling Data Skew in Spark Joins
 
