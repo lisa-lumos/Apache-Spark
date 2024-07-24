@@ -73,7 +73,17 @@ Regularly, spark execution plan is created before it starts the job execution, s
 If you use AQE, do not disable local shuffle reader `spark.sql.adaptive.localShuffleReader.enabled = true` (it is enabled by default). This is designed to further optimize the AQE broadcast join, by reducing the network traffic.  
 
 ## Handling Data Skew in Spark Joins
+Assume you are joining two large tables. During the shuffle step in the sort-merge join, the data was re-partitioned by the join key. Assume one partition from the left table is much larger than the others, so the task that is responsible for that join key from both tables might need a bigger memory than the rest of the tasks, or, it might take much longer to complete. 
 
+Spark AQE solves the problem. It could split the larger partition into more partitions, and duplicate the right table's matching partition. In this case, more tasks will handle the original larger partition. 
+
+To turn it on:
+- `spark.sql.adaptive.enabled = true`. Enables the AQE feature. 
+- `spark.sql.adaptive.skewJoin.enabled = true`. Enables the skew-join optimization. 
+
+To customize it (AQE identify a partition is skewed, when both of the below thresholds are broken):
+- `spark.sql.adaptive.skewJoin.skewedPartitionFactor = 5`. Default to 5, which means, the partition is skewed if its size is larger than 5 times the median partition size. 
+- `spark.sql.adaptive.skewJoin.skewedPartitionThresholdInBytes = 256MB`. Default to 256MB, which means, the partition is skewed if its size in bytes is larger than this threshold. 
 
 ## Spark Dynamic Partition Pruning
 
