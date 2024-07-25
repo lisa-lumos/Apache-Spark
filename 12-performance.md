@@ -86,7 +86,19 @@ To customize it (AQE identify a partition is skewed, when both of the below thre
 - `spark.sql.adaptive.skewJoin.skewedPartitionThresholdInBytes = 256MB`. Default to 256MB, which means, the partition is skewed if its size in bytes is larger than this threshold. 
 
 ## Spark Dynamic Partition Pruning
+A new feature available in Spark 3.0 and above. It is enabled by default: `spark.sql.optimizer.dynamicPartitionPruning.enabled = true`.
 
+Assume you have a large fact table, you partitioned it by date col, because you know you usually query this table on this date col. Now when you run an agg query for a certain date, Spark only reads the partitions that contains data for that date. 
+
+Predicate pushdown. Spark will push down "where" clause filters to the scan step, and apply them as early as possible. 
+
+Partition pruning. It will only read the partition that contains the selected date. It needs your data to be already partitioned on the filter columns. 
+
+Assume you join this fact table with a date spine dimension table, on the "date" column, and filter on that dimension table's "year" and "month" column. Before Spark 3.0, this will cause a sort-merge join, because the filter conditions are not applied on the fact table's "date" column. 
+
+Dynamic partition pruning. With Spark 3.0, you first broadcast the date dimension table, Spark will then take the filter condition applied to the dimension table, and inject it into your fact table as a subquery, so it can apply partition pruning on the fact table. 
+
+It works for fact and dimension-like tables. The fact table must be partitioned, and, the you must broadcast your dimension table, for this feature to work. If your dimension table is smaller than 10MB, the broadcasting happens automatically.  
 
 ## Data Caching in Spark
 
