@@ -101,6 +101,29 @@ Dynamic partition pruning. With Spark 3.0, you first broadcast the date dimensio
 It works for fact and dimension-like tables. The fact table must be partitioned, and, the you must broadcast your dimension table, for this feature to work. If your dimension table is smaller than 10MB, the broadcasting happens automatically.  
 
 ## Data Caching in Spark
+Storage Memory Pool can cache dataframes. 
+
+How to cache a df:
+1. cache(). Doesn't take arguments. Uses the default MEMORY_AND_DISK storage level. Memory Deserialized 1X Replicated. 
+2. persist(). Takes an optional storage level argument. 
+
+They are both lazy transformations. They are smart enough to cache only what you access. 
+
+Examples:
+```py
+df = spark.range(1, 1000000).toDF("id") \
+    .repartition(10) \
+    .withColumn("square", expr("id * id")) \
+    .cache()
+
+df.take(10) # cache() is an lazy transformation, so need to execute an action
+
+df.count()
+```
+
+The "take(10)" action will bring only 1 partition into the memory, and return 10 records from the loaded partition. So that only 1 partition is cached. Note that Spark will always cache the entire partition - it will not do only a portion of the partition. 
+
+The "count()" action will bring all the partitions into the memory, compute the count, and return it. 
 
 
 ## Repartition and Coalesce
