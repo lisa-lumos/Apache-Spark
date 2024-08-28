@@ -125,6 +125,57 @@ The "take(10)" action will bring only 1 partition into the memory, and return 10
 
 The "count()" action will bring all the partitions into the memory, compute the count, and return it. 
 
+Examples:
+```py
+df = spark.range(1, 1000000).toDF("id") \
+    .repartition(10) \
+    .withColumn("square", expr("id * id")) \
+    .persist(StorageLevel(
+            False, # useDisk (if memory is not large enough)
+            True,  # useMemory (cache into memory)
+            False, # useOffHeap
+            True,  # deserialized (whether use deserialized format in memory)
+            1      # replication=1
+        )
+    )
+
+df.take(10) # cache() is an lazy transformation, so need to execute an action
+
+df.count()
+```
+
+Spark always store data on a disk in serialized format. But when data comes into Spark memory, it must be deserialized into Java objects. The deserialized format takes more space, while the serialized format is more compact. 
+
+If you choose to use serialized format in memory, you can save some memory, but when spark need to use that data, it need to spend some extra CPU overhead, to deserialize it. The recommendation is to keep your data deserialized and save your CPU. 
+
+If space is not enough, the order is: memory, then off heap, then disk. 
+
+You can also use pre-defined constants. Examples:
+```py
+df = spark.range(1, 1000000).toDF("id") \
+    .repartition(10) \
+    .withColumn("square", expr("id * id")) \
+    .persist(StorageLevel=StorageLevel.MEMORY_AND_DISK)
+
+df.take(10) # cache() is an lazy transformation, so need to execute an action
+
+df.count()
+```
+
+Some of the pre-defined constants:
+- DISK_ONLY
+- MEMORY_ONLY
+- MEMORY_ONLY_2 (means 2 replication, but takes a lot of memory)
+- MEMORY_ONLY_3
+- MEMORY_AND_DISK
+- MEMORY_ONLY_SER
+- MEMORY_AND_DISK_SER
+- OFF_HEAP
+- ...
+
+Use `df.unpersist()` to un-cache.
+
+When to cache, and not-to-cache? When you need to access large df multiple times, across Spark actions, consider caching your df. Make sure to config your memory accordingly. Do not cache your df, when significant portions of then do not fit in the memory. If you do not frequently reuse your df, or if your df is too small, do not cache them. 
 
 ## Repartition and Coalesce
 
