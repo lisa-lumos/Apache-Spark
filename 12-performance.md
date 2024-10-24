@@ -178,7 +178,31 @@ Use `df.unpersist()` to un-cache.
 When to cache, and not-to-cache? When you need to access large df multiple times, across Spark actions, consider caching your df. Make sure to config your memory accordingly. Do not cache your df, when significant portions of then do not fit in the memory. If you do not frequently reuse your df, or if your df is too small, do not cache them. 
 
 ## Repartition and Coalesce
+2 ways to repartition your dataframe:
+1. `repartition(numPartitions, *cols)`. Hash based partitioning. 
+2. `repartitionByRange(numPartitions, *cols)`. Range of values based partitioning. Uses data sampling to determine partition ranges, so the result is not deterministic. 
 
+repartition is a wide dependency transformation, so it will cause a shuffle/sort operation. 
+
+repartition on a column name doesn't guarantee a uniform partitioning. 
+
+e.g.:
+```py
+repartition(10)
+repartition(10, 'age')
+repartition(10, 'age', 'gender')
+repartition('age') # the default num of partitions is determined by spark.sql.shuffle.partitions config
+repartition('age', 'gender')
+```
+
+Repartition causes a shuffle/sort, which is expensive, and should be avoided is unnecessary. When should you do a repartition? 
+- Dataframe reuse, and repeated column filters
+- Dataframe partitions are not well distributed
+- Large dataframe partitions, or skewed partitions
+
+You should use repartitioning when you want to increase the number of partitions. But when you want to decrease the num of partitions, you should use the Coalesce method - it combines local partitions on the same worker node, to meet your target number of partitions. And hence it can reduce num of partitions faster than repartitioning. 
+
+Coalesce doesn't cause a shuffle/sort, because it combines local partitions only. Note that it can cause skewed partitions. Try to avoid drastically decrease num of partitions, because it may lead to a OOM exception. 
 
 ## Dataframe Hints
 
