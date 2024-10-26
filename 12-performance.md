@@ -205,7 +205,47 @@ You should use repartitioning when you want to increase the number of partitions
 Coalesce doesn't cause a shuffle/sort, because it combines local partitions only. Note that it can cause skewed partitions. Try to avoid drastically decrease num of partitions, because it may lead to a OOM exception. 
 
 ## Dataframe Hints
+Hints give users a way to suggest how Spark SQL to use specific approaches to generate its execution plan. Spark doesn't guarantee that it will apply the hint. 
 
+Two types of hints:
+1. Partitioning hints
+   - coalesce. Used to reduce num of partitions to the desired number
+   - repartition. 
+   - repartition_by_range. 
+   - rebalance. Used to rebalance the query result partitions, so they they are of a reasonable size. Can take col names as params. Helpful when you need to write the query result to a table, to avoid too small/big files. AQE needs to be enabled to be able to use this hint. 
+2. Join hints (allow you to suggest join strategy) (ordered by priority)
+   - broadcast (aka, broadcastjoin/mapjoin)
+   - merge (shuffle_merge/mergejoin)
+   - shuffle_hash
+   - shuffle_replicat_nl(shuffle and replicate nested loop join)
+
+Using hints in Spark sql:
+```sql
+select /*+ coalesce(3) */ * from t;
+select /*+ repartition(3) */ * from t;
+
+select /*+ broadcast(t1) */ * from t1
+inner join t2 on t1.key = t2.key;
+
+select /*+ merge(t1) */ * from t
+inner join t2 on t1.key = t2.key;
+```
+
+df.hint() method:
+```py
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+
+if __name__ == "__main__":
+    spark = SparkSession.builder.appName('Demo').master('local[3]').getOrCreate()
+
+    df1 = spark.read.json('data/d1/') # a large df
+    df2 = spark.read.json('data/d2/') # a small df
+    
+    join_df = df1.join(broadcast(df2), 'id', 'inner').hint("COALESCE", 5)
+    join_df.show()
+    print(f'Num of output partitions: {str(join_df.rdd.getNumPartitions())}')
+```
 
 ## Broadcast Variables
 
