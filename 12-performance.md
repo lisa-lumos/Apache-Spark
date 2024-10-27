@@ -241,14 +241,62 @@ if __name__ == "__main__":
 
     df1 = spark.read.json('data/d1/') # a large df
     df2 = spark.read.json('data/d2/') # a small df
-    
+
     join_df = df1.join(broadcast(df2), 'id', 'inner').hint("COALESCE", 5)
     join_df.show()
     print(f'Num of output partitions: {str(join_df.rdd.getNumPartitions())}')
 ```
 
 ## Broadcast Variables
+They are part of the Spark low-level APIs. If you are using Spark Dataframe APIs, you are not likely to use broadcast variables. They were primarily used with the Spark low-level RDD APIs.
 
+However, it is essential to understand the concept.
+
+For example, you have a dict that maps each product code to a product name. You need to create a udf that takes a df and a product code, and returns the product name. 
+
+One easy way it to keep the lookup data (the dict) in a file, load it at runtime, and share it with the UDF. 
+
+```py
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+def my_func(code: str) -> str:
+    # return prdCode.get(code) # use the lambda closure
+    return bdData.value.get(code) # use the broadcast variable
+
+if __name__ == "__main__":
+    spark = SparkSession \
+        .builder \
+        .appName("Demo") \
+        .master("local[3]") \
+        .getOrCreate()
+
+    prdCode = spark.read.csv("data/lookup.csv").rdd.collectAsMap() # a python dict
+
+    bdData = spark.sparkContext.broadcast(prdCode) # a broadcast variable
+
+    data_list = [("98312", "2021-01-01", "1200", "01"),
+                 ("01056", "2021-01-02", "2345", "01"),
+                 ("98312", "2021-02-03", "1200", "02"),
+                 ("01056", "2021-02-04", "2345", "02"),
+                 ("02845", "2021-02-05", "9812", "02")]
+    df = spark.createDataFrame(data_list) \
+        .toDF("code", "order_date", "price", "qty")
+
+    spark.udf.register("my_udf", my_func, StringType())
+    df.withColumn("Product", expr("my_udf(code)")) \
+        .show()
+
+```
+
+If you use a closure, Spark will serialize the closure to each task, e.g., if you have 1k tasks running on a 30 node cluster, your closure is serialized 1k times. But is you use a broadcast variable, Spark will serialize it once per worker node, and cache it there for future usage, so the broadcast variable is only serialized 30 times. 
+
+Broadcast variables are shared, immutable variables, cached on every machine in the cluster, instead of serialized with every single task. And this serialization is lazy. The broadcast variable is serialized to a worker node only if you have at least one task running on the worker node that needs to access the broadcast variable.
+
+Note that the broadcast variable must fit into the memory of an executor. 
+
+Spark Dataframe APIs use this same technique to implement broadcast joins.
 
 ## Accumulators
 
