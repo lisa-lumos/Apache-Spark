@@ -299,7 +299,55 @@ Note that the broadcast variable must fit into the memory of an executor.
 Spark Dataframe APIs use this same technique to implement broadcast joins.
 
 ## Accumulators
+Also part of the Spark low-level APIs. If you are using Spark Dataframe APIs, you are not likely to use accumulators. They were primarily used with the Spark low-level RDD APIs. However, it is essential to understand the concept.
 
+Spark Accumulator is a global mutable variable that a Spark cluster can safely update on a per-row basis. You can use them to implement counters or sums. You do not have to collect it from anywhere, because the accumulators always live at the driver.
+
+Assume you need to count num of nulls in a col in a df, and decide to create a UDF for this. However, count() operation is a wide dependency action, which we try to avoid.
+
+```py
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+
+def count_nulls(shipments: str) -> int:
+    s = None
+    try:
+        s = int(shipments)
+    except ValueError:
+        n_nulls.add(1)
+    return s
+
+
+if __name__ == "__main__":
+    spark = SparkSession \
+        .builder \
+        .appName("Demo") \
+        .master("local[3]") \
+        .getOrCreate()
+
+    data_list = [("india", "india", '5'),
+                 ("india", "china", '7'),
+                 ("china", "india", 'three'),
+                 ("china", "china", '6'),
+                 ("japan", "china", 'Five')]
+
+    df = spark.createDataFrame(data_list) \
+        .toDF("source", "destination", "shipments")
+
+    n_nulls = spark.sparkContext.accumulator(0)
+    spark.udf.register("udf_count_nulls", count_nulls, IntegerType())
+    df.withColumn("shipments_int", expr("udf_count_nulls(shipments)")) \
+        .show()
+
+    print("Bad Record Count:" + str(n_nulls.value))
+
+```
+
+It is always recommended to use an accumulator from inside an action, instead of from inside a transformation. Because Spark guarantees accurate results inside an action, as Spark runs duplicate tasks in many situations. Some spark tasks can fail for a variety of reasons, but the driver will retry those tasks on a different worker, assume success in the retry; it might also trigger a duplicate task if a task is running very slow. 
+
+Spark in Scala also allows you to give your accumulator a name and show them in the Spark UI. However, PySpark accumulators are always unnamed, and they do not show up in the Spark UI. Spark allows you to create Long and Float accumulators. However, you can also create custom accumulators.
 
 ## Speculative Execution
 
@@ -311,6 +359,6 @@ Spark Dataframe APIs use this same technique to implement broadcast joins.
 
 
 ## Unit Testing in Spark
-
+skipped. 
 
 
