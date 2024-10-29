@@ -350,7 +350,20 @@ It is always recommended to use an accumulator from inside an action, instead of
 Spark in Scala also allows you to give your accumulator a name and show them in the Spark UI. However, PySpark accumulators are always unnamed, and they do not show up in the Spark UI. Spark allows you to create Long and Float accumulators. However, you can also create custom accumulators.
 
 ## Speculative Execution
+`spark.speculation = true`. Spark will automatically identify slow running tasks, and run a duplicate copy of the same tasks on other nodes, and see if it runs faster, if so, it will accept the faster task, and kill the slower one. This new duplicate task is the "speculative task".  
 
+It is helpful if, and only if, the task is slow due to a problem with the worker node, such as hardware problem, overload, etc. 
+
+By default, this config set to false. Note that enabling speculative execution will take some extra resources (overhead) from the Spark cluster. 
+
+Speculative task cannot help with data skew or memory shortage. 
+
+Tuning params:
+- `spark.speculation.interval = 100ms`. slowness checking interval. 
+- `spark.speculation.multiplier = 1.5`. A task is speculative if it takes more than 1.5 times the median of other tasks' execution time. 
+- `spark.speculation.quantile = 0.75`. Percentage of tasks that must complete, before speculation is enabled for a particular stage. 
+- `spark.speculation.minTaskRuntime = 100ms`. Min time a task runs, before being considered for speculation. 
+- `spark.speculation.task.duration.threshold = None`. After this time, the scheduler will run a speculative task. 
 
 ## Dynamic Resource Allocation
 
