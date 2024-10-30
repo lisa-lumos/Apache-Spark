@@ -366,7 +366,24 @@ Tuning params:
 - `spark.speculation.task.duration.threshold = None`. After this time, the scheduler will run a speculative task. 
 
 ## Dynamic Resource Allocation
+It is a Spark config. 
 
+Your Spark cluster could be multi-user, so at any time, it might be running multiple Spark applications. 
+
+Assume your cluster has a mix capacity of 100 containers. One application is currently running, and demands 100 containers. Now anther small application is submitted, and it demands only 5 containers. 
+
+Spark resource allocation define how your application request resources, and how it releases the resources back to the cluster manager:
+- Static allocation. Default. First come, first reserve. The first application will demand resources, and reserve them for the entire duration. These resources are released back to the cluster manager, only when the application finishes its execution. For example, your application has 5 stages, and one stage requires 400 parallel tasks, and another stage only require 100. You need 100 executors with 4 cpu cores each, because you have a stage that needs to run 400 tasks. But the latter stage only need 100 executors, yet your app to hold all the 400 executors to the end. 
+- Dynamic allocation. Automatically release the executors, if they are not using it; and again acquire executors when they are needed. Enable by: 
+  - `spark.dynamicAllocation.enabled = true`
+  - `spark.dynamicAllocation.shuffleTracking.enabled = true`
+
+
+`spark.dynamicAllocation.executorIdleTimeout = 60s`. default. Controls the release time for an idle executor. If an executor is idle with no task running there for 60s, your application will release executor back to the cluster manager. 
+
+`spark.dynamicAllocation.schedulerBacklogTimeout = 1s`. Controls the request time for more executors. If you have some pending tasks for more than 1s, and do not have any free executor to run them, your application will request more executors. 
+
+Recommendation: If you have a shared cluster, you should enable dynamic allocation, so your Spark application can demand and release executors dynamically. 
 
 ## Spark Schedulers
 
