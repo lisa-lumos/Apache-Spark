@@ -386,9 +386,71 @@ Spark resource allocation define how your application request resources, and how
 Recommendation: If you have a shared cluster, you should enable dynamic allocation, so your Spark application can demand and release executors dynamically. 
 
 ## Spark Schedulers
+Within a single Spark application, each action triggers a spark job. Typically, these jobs run sequentially. However, you can also trigger them to run parallelly. 
 
+Two sets of independent operations, and all jobs run sequentially:
+```py
+from pyspark.sql import SparkSession
+
+if __name__ == "__main__":
+    spark = SparkSession \
+        .builder \
+        .appName("Demo") \
+        .master("local[3]") \
+        .config("spark.sql.autoBroadcastJoinThreshold", "50B") \
+        .getOrCreate()
+
+    df1 = spark.read.json("data/d1")
+    df2 = spark.read.json("data/d2")
+    print(df1.join(df2, "id", "inner").count())
+
+    df3 = spark.read.json("data/d3")
+    df4 = spark.read.json("data/d4")
+    print(df3.join(df4, "id", "inner").count())
+```
+
+Create two parallel threads, and trigger each of the blocks from 2 differnt threads:
+```py
+from pyspark.sql import SparkSession
+import threading
+
+def do_job(f1, f2):
+    df1 = spark.read.json(f1)
+    df2 = spark.read.json(f2)
+    outputs.append(df1.join(df2, "id", "inner").count())
+
+if __name__ == "__main__":
+    spark = SparkSession \
+        .builder \
+        .appName("Demo") \
+        .master("local[3]") \
+        .config("spark.sql.autoBroadcastJoinThreshold", "50B") \
+        .config("spark.scheduler.mode", "FAIR") \
+        .getOrCreate()
+
+    file_prefix = "data/d"
+    jobs = []
+    outputs = []
+
+    for i in range(0, 2):
+        file1 = file_prefix + str(i + 1)
+        file2 = file_prefix + str(i + 2)
+        thread = threading.Thread(target=do_job, args=(file1, file2))
+        jobs.append(thread)
+
+    for j in jobs:
+        j.start()
+
+    for j in jobs:
+        j.join()
+
+    print(outputs)
+
+```
+
+This might cause competition between jobs to acquire resources. So will need to handle scheduling within an application. 
+
+By default, Spark job scheduler (FIFO) prioritizes the first job. But you can config it to use the FAIR scheduler, with `spark.scheduler.mode = FAIR`, so that Spark assigns tasks between jobs in a round-robin fashion. In this way, no parallel jobs will be waiting for resources. 
 
 ## Unit Testing in Spark
 skipped. 
-
-
