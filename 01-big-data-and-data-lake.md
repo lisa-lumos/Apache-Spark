@@ -102,9 +102,9 @@ The notion of the data lake recommends that you bring data into the lake in a ra
 ## Apache Spark and Databricks Cloud
 Databricks is the main driving force behind the Spark. 
 
-The Spark core layer has 2 parts:
+The Spark core layer has:
 1. A distributed computing engine
-2. A set of core APIs. Used for writing data processing logic during the initial days of Apache Spark. Can be tricky to learn. Lack some performance optimization features. Now recommended to avoid them. 
+2. A set of core APIs. Used for writing data processing logic during the initial days of Apache Spark. Tricky to learn. Lack some performance optimization features. Now recommended to avoid them. 
 
 Spark only gives you the data processing framework, so you will need a "cluster manager". They are also called "Resource manger", or "container orchestrator". The Hadoop YARN resource manager is the most commonly used cluster manager for Spark. You can also use Mesos, and Spark Standalone Cluster Manager. The newer versions of Spark are also compatible with Kubernetes as a Cluster Orchestrator. 
 
@@ -116,9 +116,9 @@ The Spark compute engine is responsible for:
 - providing fault-tolerance when a job fails
 - ...
 
-The Spark SQL, Spark DataFrame APIs, Spark Streaming libraries, MLlib for Machine Learning, GraphX for Graph Computation are a set of libraries/packages/APIs/DSL developed on top of the core APIs. 
+Libraries/packages/APIs/DSL developed on top of the core APIs: The Spark SQL, Spark DataFrame APIs, Spark Streaming libraries, MLlib for Machine Learning, GraphX for Graph Computation. 
 
-Spark abstracts away the code to operate on a cluster. Compared with old Hadoop and MapReduce code, Spark code is shorter/simpler/easier-to-understand. 
+Spark abstracts away the code to operate on a cluster. Compared with old Hadoop and MapReduce code, Spark code is shorter/simpler/readable. 
 
 Apache spark is an open-source project. The original creators of Apache Spark donated it to Apache Foundation. However, the same team formed a company, and a commercial product around Apache Spark. The company and the product are both named Databricks. 
 
