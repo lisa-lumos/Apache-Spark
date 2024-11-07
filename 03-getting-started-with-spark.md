@@ -16,7 +16,7 @@ You can use SQL and dataframe API to process data with Spark.
 # the read is an attribute of the spark session object, so no parenthesis
 # it returns a DataFrameReader object
 # the format(), option() and load() are methods of the DataFrameReader. 
-# this code uses the Builder Patter in Design Patterns - 
+# this code uses the Builder Pattern in Design Patterns - 
 # each method call represents one step in the DataFrameReader. 
 # It finally returns a DataFrame object
 # refer to:
@@ -108,9 +108,9 @@ Dataframe method types:
 - Transformations. Produce a newly transformed dataframe. 
 - Functions/Methods. Not actions nor transformations. 
 
-Actions: collect, count, describe, first, foreach/foreachPartition, head/tail, show, summary, take, toLocalIterator. 
+Actions: collect, count (when input is a df), describe, first, foreach/foreachPartition, head/tail, show, summary, take, toLocalIterator. 
 
-Transformations: agg, alias, coalesce, colRegex, filter, groupby, dropna, join, limit, orderBy, select, sort, union, where, ...
+Transformations: agg, count (when input is a GroupedData object), alias, coalesce, colRegex, filter, groupby, dropna, join, limit, orderBy, select, sort, union, where, ...
 
 Functions/Methods: cache, checkpoint, createTempView, explain, toDF, toJSON, writeTo, ...
 
