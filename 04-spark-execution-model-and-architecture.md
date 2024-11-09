@@ -5,7 +5,7 @@
 2. Submit a job. spark-submit, Databricks Notebook, Rest API. Such as the below use cases. 
 
 Use cases:
-- Stream processing. Read news feed as a continuous stream, then apply MLto figure out the type of uses that might be interested in each news, and direct them to these users
+- Stream processing. Read news feed as a continuous stream, then apply ML to figure out the type of uses that might be interested in each news, and direct them to these users
 - Batch processing. YouTube statistics, collect the data for a day, and start a scheduled spark job, to compte the watch time in minutes. The result goes into a table and a dashboard. 
 
 For these use cases, you must package your app, and submit it to the Spark cluster for execution. 
@@ -15,7 +15,7 @@ When an application is submitted to Spark, it will create a master process for t
 
 In Spark terminology, the master is a driver, and the workers are executors.
 
-The Spark engin ask for a container from the underlying cluster manager, to start the driver process. Once started, the driver again will ask for some more containers, to start the executor process. This happens for each application. 
+The Spark engine asks for a container from the underlying cluster manager, to start the driver process. Once started, the driver again will ask for some more containers, to start the executor process. This happens for each application. 
 
 ## Spark Execution Modes and Cluster Managers
 Q: How does Spark run on a local machine?
@@ -34,7 +34,7 @@ Execution modes: client (for local machine, or on YARN cluster with notebook/spa
 Execution Tools: IDE, Notebook (for local machine), Spark submit (real cluster)
 
 ## Working with PySpark Shell - Demo
-```console
+```sh
 pyspark --help
 
 # use 3 threads, give driver 2gb of ram. 
@@ -43,10 +43,8 @@ pyspark --master local[3] --driver-memory 2G
 >>> df = spark.read.json("C:/demo/notebook/data/people.json")
 >>> df.show()
 
-# this url is the Spark Context web UI. 
+# This url is the Spark Context web UI. It is only available when the spark application is running. 
 # localhost:4040/jobs/ 
-
-# The above UI is only available when the spark application is running. 
 
 ```
 
@@ -57,7 +55,7 @@ In you GCP account, go to your Console Home page. Click the dropdown menu in the
 Mostly used by data scientists/analysts for interactive exploration directly in the production cluster. 
 
 Work with shell. ssh to the GCP master node, and run:
-```console
+```sh
 pyspark --master yarn --driver-memory 1G --executor-memory 500M --num-executors 2 --executor-cores 1
 ```
 
@@ -78,7 +76,7 @@ spark.version
 
 ## Working with Spark Submit - Demo
 Mostly used to executing packaged Spark application on your prod cluster. 
-```console
+```sh
 spark-submit --help
 
 # the 100 is the input into the code
