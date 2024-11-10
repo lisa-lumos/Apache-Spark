@@ -73,7 +73,7 @@ The logger is the set of APIs that will be used in the application. These config
 
 In your local machine, use file "SPARK_HOME/conf/spark-defaults.conf" to set JVM parameters, where "SPARK_HOME" is a environment variable. The last line of this file looks like: `spark.driver.extraJavaOptions -Dlog4j.configureation=file:log4j.properties -Dspark.yarn.app.containter.log.dir=app-logs -Dlogfile.name=hello-spark`. This indicates the log4j config file is the "log4j.properties" file in the project root directory. Similar to the log file dir location "app-logs", and the log file name "hello-spark". 
 
-We cannot used python logger, because collecting python log files across multiple nodes ia not integrated with the spark. 
+We cannot use python logger, because collecting python log files across multiple nodes ia not integrated with the spark. 
 
 ## Creating Spark Session
 The SparkSession object is your Spark Driver, which starts the executors, who then will do most of the work. 
@@ -82,7 +82,7 @@ When you start the spark shell, or the notebook, they create a Spark Session for
 
 However, when you are writing a Spark program, then you must create a SparkSession, because it is not already provided. 
 
-The SparkSession is a Singleton object, so each Spark application can have one and only one active spark session. It is because SparkSession if your driver, and you cannot have more than 1 driver in a Spark application. 
+The SparkSession is a Singleton object, so each Spark application can have one and only one active spark session. It is because SparkSession is your driver, and you cannot have more than 1 driver in a Spark application. 
 
 "HelloSpark.py": 
 ```py
